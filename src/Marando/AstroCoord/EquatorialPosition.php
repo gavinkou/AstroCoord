@@ -21,11 +21,8 @@
 namespace Marando\AstroCoord;
 
 /**
- * @property Distance $x
- * @property Distance $y
- * @property Distance $z
- * @property Distance $r
+ * @property Distance $dist
  */
-class Cartesian {
+class EquatorialPosition extends Equatorial {
 
 }

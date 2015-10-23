@@ -22,4 +22,10 @@ namespace Marando\AstroCoord\Arrays;
 
 class EquatorialArray {
 
+  public static function minSeparation() {
+    // if 2 angular
+    // if 3 circular
+    // if > 4 or < 2 throw error
+  }
+
 }

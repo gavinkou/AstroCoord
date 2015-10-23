@@ -4,8 +4,89 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "afbff82e2c644ce61a7b66c2ed595ad1",
+    "hash": "19bf980053899fd0a35e27adb37aab50",
     "packages": [
+        {
+            "name": "marando/astrodate",
+            "version": "0.2.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/marando/AstroDate.git",
+                "reference": "63ce31bc82d7b6e737e79c895105be671affc60f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/marando/AstroDate/zipball/63ce31bc82d7b6e737e79c895105be671affc60f",
+                "reference": "63ce31bc82d7b6e737e79c895105be671affc60f",
+                "shasum": ""
+            },
+            "require": {
+                "marando/meeus-nutation": "^0.2.3",
+                "marando/units": "^0.1.2",
+                "php": "^5.5"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Marando": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GNU2"
+            ],
+            "authors": [
+                {
+                    "name": "Ashley Marando",
+                    "email": "a.marando@me.com"
+                }
+            ],
+            "description": "A PHP Date/Time class with useful Astronomy related functionality ",
+            "time": "2015-10-22 19:21:16"
+        },
+        {
+            "name": "marando/meeus-nutation",
+            "version": "0.2.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/marando/Meeus-Nutation.git",
+                "reference": "c947cc18b1a5237ce03b42e64c36ae5f2b0d3409"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/marando/Meeus-Nutation/zipball/c947cc18b1a5237ce03b42e64c36ae5f2b0d3409",
+                "reference": "c947cc18b1a5237ce03b42e64c36ae5f2b0d3409",
+                "shasum": ""
+            },
+            "require": {
+                "marando/astrodate": "^0.2.4",
+                "marando/units": "^0.1.2"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^5.0"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-0": {
+                    "Marando": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GNU2"
+            ],
+            "authors": [
+                {
+                    "name": "Ashley Marando",
+                    "email": "a.marando@me.com"
+                }
+            ],
+            "description": "A PHP implementation of the Nutation methods discussed in \"Astronomical Algorithms\" by J. Meeus",
+            "time": "2015-10-22 19:20:18"
+        },
         {
             "name": "marando/units",
             "version": "0.1.3",

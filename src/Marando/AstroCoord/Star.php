@@ -18,14 +18,27 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-namespace Marando\AstroCoord;
+namespace Marando\AstroCoord\Objects;
 
 /**
- * @property Distance $x
- * @property Distance $y
- * @property Distance $z
- * @property Distance $r
+ * @property Equatorial $position
+ * @property PropMotion $motion
+ * @property string     $name
+ * @property string     $code
  */
-class Cartesian {
+class Star {
+
+}
+
+
+////  this goes in the Meeus-Precession package
+/**
+ * @property Angle    $ra
+ * @property Angle    $dec
+ * @property Angle    $paralax
+ * @property Distance $dist
+ * @property Velocity $velocity
+ */
+class ProperMotion {
 
 }

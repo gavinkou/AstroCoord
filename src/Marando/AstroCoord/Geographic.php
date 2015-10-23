@@ -18,14 +18,9 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
+
 namespace Marando\AstroCoord;
 
-/**
- * @property Distance $x
- * @property Distance $y
- * @property Distance $z
- * @property Distance $r
- */
-class Cartesian {
+class Geographic {
 
 }

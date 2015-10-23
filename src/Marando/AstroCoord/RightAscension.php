@@ -1,5 +1,9 @@
 <?php
 
+thi s should just be time
+
+
+
 /*
  * Copyright (C) 2015 ashley
  *
@@ -20,6 +24,67 @@
 
 namespace Marando\AstroCoord;
 
+use \Marando\Units\Angle;
+use \Marando\Units\Time;
+
 class RightAscension {
+
+  //----------------------------------------------------------------------------
+  // Constructors
+  //----------------------------------------------------------------------------
+
+  public function __construct(Angle $angle) {
+
+  }
+
+  // // // Static
+
+  public static function hms() {
+
+  }
+
+  public static function angle() {
+
+  }
+
+  public static function deg() {
+
+  }
+
+  public static function rad() {
+
+  }
+
+  public static function time() {
+
+  }
+
+  //----------------------------------------------------------------------------
+  // Properties
+  //----------------------------------------------------------------------------
+
+  /**
+   * Angle representation of this right ascension
+   * @var Angle
+   */
+  protected $angle;
+
+  public function __get($name) {
+
+  }
+
+  public function __set($name, $value) {
+
+  }
+
+  //----------------------------------------------------------------------------
+  // Functions
+  //----------------------------------------------------------------------------
+
+  public function norm() {
+    $this->angle->norm(0, 360);
+  }
+
+  public function
 
 }

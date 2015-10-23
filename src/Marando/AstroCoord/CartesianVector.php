@@ -20,6 +20,11 @@
 
 namespace Marando\AstroCoord;
 
+/**
+ * @property Velocity $vx
+ * @property Velocity $vy
+ * @property Velocity $vz
+ */
 class CartesianVector extends Cartesian {
 
 }
