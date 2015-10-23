@@ -20,11 +20,12 @@
 
 namespace Marando\AstroCoord;
 
+use \Exception;
+use \Marando\AstroCoord\Ecliptic;
 use \Marando\AstroDate\AstroDate;
 use \Marando\Meeus\Nutation\Nutation;
 use \Marando\Units\Angle;
 use \Marando\Units\Time;
-use \Marando\AstroCoord\Ecliptic;
 
 /**
  * Represents an equatorial coordinate which is referenced to the Earth's axis
@@ -201,8 +202,14 @@ class Equatorial {
     return Ecliptic::equatorial($this, $date, $obli);
   }
 
-  public function toHorizontal(AstroDate $date, Geographic $g) {
-
+  /**
+   *
+   * @param AstroDate $date
+   * @param \Marando\AstroCoord\Geographic $geo
+   * @return Horizontal
+   */
+  public function toHorizontal(AstroDate $date, Geographic $geo) {
+    return Horizontal::equatorial($this, $geo, $date);
   }
 
   public function toGalactic(Epoch $e) {

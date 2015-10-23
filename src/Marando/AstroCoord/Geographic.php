@@ -18,9 +18,77 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-
 namespace Marando\AstroCoord;
 
+use \Marando\Units\Angle;
+
+/**
+ * @property Angle $lat Latitude, φ
+ * @property Angle $lon Longitude, ψ or L
+ */
 class Geographic {
+
+  //----------------------------------------------------------------------------
+  // Constructors
+  //----------------------------------------------------------------------------
+
+  public function __construct(Angle $lat, Angle $lon) {
+    $this->lat = $lat;
+    $this->lon = $lon;
+  }
+
+  // // // Static
+
+  public static function create(Angle $lat, Angle $lon) {
+    return new static($lat, $lon);
+  }
+
+  public static function deg($lat, $lon) {
+    return new static(Angle::deg($lat), Angle::deg($lon));
+  }
+
+  public static function rad($lat, $lon) {
+    return new static(Angle::rad($lat), Angle::rad($lon));
+  }
+
+  public static function dmsdms($φd, $φm, $φs, $ψd, $ψm, $ψs) {
+    return new static(Angle::dms($φd, $φm, $φs), Angle::dms($ψd, $$ψm, $ψs));
+  }
+
+  //----------------------------------------------------------------------------
+  // Properties
+  //----------------------------------------------------------------------------
+
+  /**
+   *
+   * @var Angle
+   */
+  protected $lat;
+
+  /**
+   *
+   * @var Angle
+   */
+  protected $lon;
+
+  public function __get($name) {
+    switch ($name) {
+      // Pass through to property
+      case 'lat':
+      case 'lon':
+        return $this->{$name};
+
+      default:
+        throw new Exception("{$name} is not a valid property");
+    }
+  }
+
+  //----------------------------------------------------------------------------
+  // Functions
+  //----------------------------------------------------------------------------
+
+  public function __toString() {
+    return "lat = {$this->lat}, lon = {$this->lon}";
+  }
 
 }
