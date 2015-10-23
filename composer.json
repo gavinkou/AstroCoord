@@ -2,7 +2,7 @@
   "name": "marando/astrocoord",
   "description": "A PHP package of objects representing astronomical coordinate systems",
   "require": {
-    "marando/units": "^0.1.3",
+    "marando/units": "^0.2",
     "marando/astrodate": "^0.2.4"
   },
   "require-dev": {
