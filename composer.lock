@@ -4,25 +4,25 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "f4634d7a9cf4493de3086ace07f41c58",
+    "hash": "256472d78b8c910946f85c8a1f277c2c",
     "packages": [
         {
             "name": "marando/astrodate",
-            "version": "0.2.6",
+            "version": "0.2.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/AstroDate.git",
-                "reference": "4234cfc6a804bd56701bb32be37bed3a01ede83f"
+                "reference": "4b3a3969c1f3218a4001302c59d11d023d089c64"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/AstroDate/zipball/4234cfc6a804bd56701bb32be37bed3a01ede83f",
-                "reference": "4234cfc6a804bd56701bb32be37bed3a01ede83f",
+                "url": "https://api.github.com/repos/marando/AstroDate/zipball/4b3a3969c1f3218a4001302c59d11d023d089c64",
+                "reference": "4b3a3969c1f3218a4001302c59d11d023d089c64",
                 "shasum": ""
             },
             "require": {
-                "marando/meeus-nutation": "^0.2.5",
-                "marando/units": "^0.2.2",
+                "marando/meeus-nutation": "^0.2.6",
+                "marando/units": "^0.3",
                 "php": "^5.5"
             },
             "require-dev": {
@@ -45,25 +45,25 @@
                 }
             ],
             "description": "A PHP Date/Time class with useful Astronomy related functionality ",
-            "time": "2015-10-23 04:54:36"
+            "time": "2015-10-24 07:59:31"
         },
         {
             "name": "marando/meeus-nutation",
-            "version": "0.2.5",
+            "version": "0.2.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/Meeus-Nutation.git",
-                "reference": "3d635e6016966b0a8babddaea04035bf7057df32"
+                "reference": "0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/Meeus-Nutation/zipball/3d635e6016966b0a8babddaea04035bf7057df32",
-                "reference": "3d635e6016966b0a8babddaea04035bf7057df32",
+                "url": "https://api.github.com/repos/marando/Meeus-Nutation/zipball/0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59",
+                "reference": "0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59",
                 "shasum": ""
             },
             "require": {
-                "marando/astrodate": "^0.2.6",
-                "marando/units": "^0.2.2"
+                "marando/astrodate": "^0.2.8",
+                "marando/units": "^0.3"
             },
             "require-dev": {
                 "phpunit/phpunit": "^5.0"
@@ -85,20 +85,20 @@
                 }
             ],
             "description": "A PHP implementation of the Nutation methods discussed in \"Astronomical Algorithms\" by J. Meeus",
-            "time": "2015-10-23 04:54:58"
+            "time": "2015-10-24 08:02:06"
         },
         {
             "name": "marando/units",
-            "version": "0.2.2",
+            "version": "0.3.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/Units.git",
-                "reference": "3a65493c8e13d17a174949bae83d5ee7e0e0a90e"
+                "reference": "dc4c574430334f4cc6a98ca48e49bf44de717e39"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/Units/zipball/3a65493c8e13d17a174949bae83d5ee7e0e0a90e",
-                "reference": "3a65493c8e13d17a174949bae83d5ee7e0e0a90e",
+                "url": "https://api.github.com/repos/marando/Units/zipball/dc4c574430334f4cc6a98ca48e49bf44de717e39",
+                "reference": "dc4c574430334f4cc6a98ca48e49bf44de717e39",
                 "shasum": ""
             },
             "require": {
@@ -124,7 +124,7 @@
                 }
             ],
             "description": "A PHP package consisting of classes representing units of measure",
-            "time": "2015-10-23 04:20:51"
+            "time": "2015-10-24 17:10:26"
         }
     ],
     "packages-dev": [
@@ -575,16 +575,16 @@
         },
         {
             "name": "phpunit/phpunit",
-            "version": "5.0.7",
+            "version": "5.0.8",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianbergmann/phpunit.git",
-                "reference": "8beaaffcde39e3202917f81341e7cdfc44b275d8"
+                "reference": "97fb2503cf8caca9d768fde3cca2ab147b9e7030"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/8beaaffcde39e3202917f81341e7cdfc44b275d8",
-                "reference": "8beaaffcde39e3202917f81341e7cdfc44b275d8",
+                "url": "https://api.github.com/repos/sebastianbergmann/phpunit/zipball/97fb2503cf8caca9d768fde3cca2ab147b9e7030",
+                "reference": "97fb2503cf8caca9d768fde3cca2ab147b9e7030",
                 "shasum": ""
             },
             "require": {
@@ -645,7 +645,7 @@
                 "testing",
                 "xunit"
             ],
-            "time": "2015-10-22 09:08:03"
+            "time": "2015-10-23 06:50:01"
         },
         {
             "name": "phpunit/phpunit-mock-objects",
