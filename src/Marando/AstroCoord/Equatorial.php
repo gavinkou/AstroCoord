@@ -22,19 +22,22 @@ namespace Marando\AstroCoord;
 
 use \Exception;
 use \Marando\AstroCoord\Ecliptic;
+use \Marando\AstroCoord\ITopographic;
 use \Marando\AstroDate\AstroDate;
 use \Marando\Meeus\Nutation\Nutation;
 use \Marando\Units\Angle;
+use \Marando\Units\Distance;
 use \Marando\Units\Time;
 
 /**
  * Represents an equatorial coordinate which is referenced to the Earth's axis
  * of rotation
  *
- * @property Time  $ra  Right Ascension, ra or α
- * @property Angle $dec Declination, dec or δ
+ * @property Time     $ra   Right Ascension, ra or α
+ * @property Angle    $dec  Declination, dec or δ
+ * @property Distance $dist Distance, Δ or r
  */
-class Equatorial {
+class Equatorial implements ITopographic {
   //----------------------------------------------------------------------------
   // Constructors
   //----------------------------------------------------------------------------
@@ -172,6 +175,12 @@ class Equatorial {
    */
   protected $dec;
 
+  /**
+   * True if the coordinates are topographic, false if they are geocentric
+   * @var bool
+   */
+  protected $topo = false;
+
   public function __get($name) {
     switch ($name) {
       // Pass through to property
@@ -187,6 +196,11 @@ class Equatorial {
   //----------------------------------------------------------------------------
   // Functions
   //----------------------------------------------------------------------------
+
+  public function dist(Distance $dist) {
+    $this->dist = $dist;
+    return $this;
+  }
 
   /**
    * Converts this instance to an ecliptic coordinate. Because the conversion
@@ -205,7 +219,7 @@ class Equatorial {
   /**
    *
    * @param AstroDate $date
-   * @param \Marando\AstroCoord\Geographic $geo
+   * @param Geographic $geo
    * @return Horizontal
    */
   public function toHorizontal(AstroDate $date, Geographic $geo) {
@@ -238,6 +252,99 @@ class Equatorial {
    */
   public function explodeDeg() {
     return [$this->ra->toAngle()->deg, $this->dec->deg];
+  }
+
+  /**
+   * Converts the geocentric coordinates of this instance to topographic
+   * coordinates based on the provided geographic location and time
+   *
+   * @param  Geographic $geo  Topographic observation point
+   * @param  AstroDate  $date Date of observation
+   * @return Equatorial       Topographic equatorial coordinates
+   */
+  public function topo(Geographic $geo , AstroDate $date ) {
+    // Check if coordinate is already topographic
+    if ($this->topo == true)
+      return $this;
+
+    // Get the geocentric to topographic delta
+    $topoΔ = $this->topoDelta($this->dist, $geo, $date);
+
+    // Adjust coordinates from geocenter to topographic location
+    $this->ra  = $this->ra->add($topoΔ->ra);
+    $this->dec = $this->dec->add($topoΔ->dec);
+
+    // Flag coordinate as topographic and return instance
+    $this->topo = true;
+    return $this;
+  }
+
+  /**
+   * Converts the topographic coordinates of this instance to geocentric
+   * coordinates based on the provided geographic location and time
+   *
+   * @param  Geographic $geo  Topographic observation point
+   * @param  AstroDate  $date Date of observation
+   * @return Equatorial       Geocentric equatorial coordinates
+   */
+  public function geocentr(Geographic $geo , AstroDate $date ) {
+    // Check if coordinate is already geocentric
+    if ($this->topo == false)
+      return $this;
+
+    // Get the geocentric to topographic delta
+    $topoΔ = $this->topoDelta($this->dist, $geo, $date);
+
+    // Adjust coordinates from geocenter to topographic location
+    $this->ra  = $this->ra->subtract($topoΔ->ra);
+    $this->dec = $this->dec->subtract($topoΔ->dec);
+
+    // Flag coordinate as geocentric and return instance
+    $this->topo = false;
+    return $this;
+  }
+
+  // // // Protected
+
+  /**
+   * Calculates the delta components of right ascension and declination for
+   * converting coordinates to and from topographic and geocentric vantage
+   * points
+   *
+   * @param  Distance   $dist Distance to target object
+   * @param  Geographic $geo  Topographic observation point
+   * @param  AstroDate  $date Date of observation
+   * @return Equatorial       Resulting deltas
+   */
+  protected function topoDelta(Distance $dist, Geographic $geo, AstroDate $date) {
+    // Parallax constants for provided geographic location
+    $ρSinφ´ = $geo->pSinLat;
+    $ρCosφ´ = $geo->pCosLat;
+
+    // Right ascension and declination as radians
+    $α = $this->ra->rad;
+    $δ = $this->dec->rad;
+
+    // Calculat parallax
+    $π = deg2rad(8.794 / 3600 / $dist->au);
+
+    // Sidereal time and local hour angle of right ascension
+    $st = $date->gast();
+    $H  = $st->add($geo->lon->toTime())->subtract($this->ra)->toAngle()->rad;
+
+    // Calculate Δα
+    $Δα = Angle::atan2(-$ρCosφ´ * sin($π) * sin($H),
+                    cos($δ) - $ρCosφ´ * sin($π) * cos($H));
+
+    // Calculate topographic declination
+    $δ´ = Angle::atan2((sin($δ) - $ρSinφ´ * sin($π)) * cos($Δα->rad),
+                    cos($δ) - $ρCosφ´ * sin($π) * cos($H));
+
+    // Deduce Δδ from δ - δ´
+    $Δδ = $δ´->subtract($this->dec);
+
+    // Return delta components
+    return static::angles($Δα, $Δδ);
   }
 
   // // // Overrides
