@@ -86,7 +86,7 @@ class Ecliptic {
     $δ = $eq->dec->rad;
 
     // Conversion to ecliptic coordinates
-    $λ = atan((sin($α) * cos($ε->rad) + tan($δ) * sin($ε->rad)) / cos($α));
+    $λ = atan2((sin($α) * cos($ε->rad) + tan($δ) * sin($ε->rad)) , cos($α));
     $β = asin(sin($δ) * cos($ε->rad) - cos($δ) * sin($ε->rad) * sin($α));
 
     // Return new ecliptic coordinate
