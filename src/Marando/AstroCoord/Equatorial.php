@@ -198,7 +198,7 @@ class Equatorial implements ITopographic {
    * True if the coordinates are topographic, false if they are geocentric
    * @var bool
    */
-  protected $topo = false;
+  protected $topo = null;
 
   public function __get($name) {
     switch ($name) {
@@ -215,6 +215,7 @@ class Equatorial implements ITopographic {
   //----------------------------------------------------------------------------
   // Functions
   //----------------------------------------------------------------------------
+
 
   public function dist(Distance $dist) {
     $this->dist = $dist;
@@ -283,7 +284,7 @@ class Equatorial implements ITopographic {
    */
   public function topo(Geographic $geo, AstroDate $date) {
     // Check if coordinate is already topographic
-    if ($this->topo == true)
+    if ($this->topo === true)
       return $this;
 
     // Get the geocentric to topographic delta
@@ -308,7 +309,7 @@ class Equatorial implements ITopographic {
    */
   public function geocentr(Geographic $geo, AstroDate $date) {
     // Check if coordinate is already geocentric
-    if ($this->topo == false)
+    if ($this->topo === false)
       return $this;
 
     // Get the geocentric to topographic delta
