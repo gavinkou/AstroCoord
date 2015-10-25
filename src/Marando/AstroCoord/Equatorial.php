@@ -99,8 +99,26 @@ class Equatorial implements ITopographic {
     return static::rad($α, $δ);
   }
 
-  public static function horizontal(Horizontal $h) {
+  public static function horizontal(Horizontal $horiz, Geographic $geo,
+          AstroDate $date) {
 
+    // Original alt/az coordinates
+    $az  = $horiz->az->rad;
+    $alt = $horiz->alt->rad;
+
+    // Geographic latitude and longitude
+    $φ = $geo->lat->rad;
+    $L = $geo->lon->rad;
+
+    // Apparant sidereal time at Greenwich, and hour angle of coordinate
+    $θ0 = $date->gast()->toAngle();
+    $H  = Angle::atan2(sin($az), (cos($az) * sin($φ) + tan($alt) * cos($φ)));
+
+    // Calculation of right ascension and declination
+    $α = $θ0->subtract($geo->lon)->subtract($H)->norm()->toTime();
+    $δ = Angle::rad(asin(sin($φ) * sin($alt) - cos($φ) * cos($alt) * cos($az)));
+
+    return static::create($α, $δ);
   }
 
   public static function galactic(Galactic $g) {
@@ -174,6 +192,7 @@ class Equatorial implements ITopographic {
    * @var Angle
    */
   protected $dec;
+  protected $dist;
 
   /**
    * True if the coordinates are topographic, false if they are geocentric
@@ -222,7 +241,7 @@ class Equatorial implements ITopographic {
    * @param Geographic $geo
    * @return Horizontal
    */
-  public function toHorizontal(AstroDate $date, Geographic $geo) {
+  public function toHorizontal(Geographic $geo, AstroDate $date) {
     return Horizontal::equatorial($this, $geo, $date);
   }
 
@@ -262,7 +281,7 @@ class Equatorial implements ITopographic {
    * @param  AstroDate  $date Date of observation
    * @return Equatorial       Topographic equatorial coordinates
    */
-  public function topo(Geographic $geo , AstroDate $date ) {
+  public function topo(Geographic $geo, AstroDate $date) {
     // Check if coordinate is already topographic
     if ($this->topo == true)
       return $this;
@@ -287,7 +306,7 @@ class Equatorial implements ITopographic {
    * @param  AstroDate  $date Date of observation
    * @return Equatorial       Geocentric equatorial coordinates
    */
-  public function geocentr(Geographic $geo , AstroDate $date ) {
+  public function geocentr(Geographic $geo, AstroDate $date) {
     // Check if coordinate is already geocentric
     if ($this->topo == false)
       return $this;

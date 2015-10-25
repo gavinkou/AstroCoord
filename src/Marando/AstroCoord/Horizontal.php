@@ -23,6 +23,7 @@ namespace Marando\AstroCoord;
 use \Marando\AstroCoord\Geographic;
 use \Marando\Units\Angle;
 use \Marando\AstroDate\AstroDate;
+use \Marando\Units\Distance;
 
 /**
  * Represents a horizontal coordinate which is referenced to the local horizon
@@ -31,7 +32,7 @@ use \Marando\AstroDate\AstroDate;
  * @property Angle $alt Altitude, angular height above horizon
  * @property Angle $az  Azimuth, measured westward from the South
  */
-class Horizontal {
+class Horizontal implements ITopographic {
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -45,7 +46,6 @@ class Horizontal {
 
   // // // Static
 
-
   public static function create(Angle $alt, Angle $az) {
     return new static($alt, $az);
   }
@@ -53,10 +53,10 @@ class Horizontal {
   public static function equatorial(Equatorial $eq, Geographic $geo,
           AstroDate $date) {
 
-    // Local apparent sidereal time and hour angle
-    $st = $date->gast($geo->lon);
+    // Apparent sidereal time at Greenwich
+    $st = $date->gast();
 
-    // Calculate hour angle (?)
+    // Calculate local hour angle of object
     $H = $st->subtract($geo->lon->toTime())->subtract($eq->ra)->toAngle()->rad;
 
     // Get right ascension and declination as radians
@@ -93,6 +93,7 @@ class Horizontal {
   protected $alt;
   protected $az;
   protected $refracted = false;
+  protected $topo      = false;
 
   public function __get($name) {
     switch ($name) {
@@ -110,11 +111,51 @@ class Horizontal {
   // Functions
   //----------------------------------------------------------------------------
 
-
+  /**
+   *
+   * @param Geographic $geo
+   * @param AstroDate $date
+   * @return Equatorial
+   */
   public function toEquatorial(Geographic $geo, AstroDate $date) {
-
+    return Equatorial::horizontal($this, $geo, $date);
   }
 
+  public function geocentr(Geographic $geo, AstroDate $date) {
+    return $this->toEquatorial($geo, $date)->topo($geo, $date);
+  }
+
+  public function topo(Geographic $geo, AstroDate $date) {
+    return $this->toEquatorial($geo, $date)->geocentr($geo, $date);
+  }
+
+  // // set flag that warns or throws exception if refration is not enabled
+  // and topo is requested, or
+  // if geocentr is requested but hasnt been defracted
+
+  /**
+    public function topo(Distance $d, Geographic $geo = null, Distance $h = null) {
+    // Find appropriate geographic coordinates
+    if ($geo == null)
+    if ($this->geo)
+    $geo = $this->geo;
+    else
+    throw new \InvalidArgumentException('No geographic coordinates.');
+
+
+
+    }
+
+    public function geocentr(Distance $d, Geographic $geo = null,
+    Distance $h = null) {
+    if ($geo == null)
+    if ($this->geo)
+    $geo = $this->geo;
+    else
+    throw new \InvalidArgumentException('No geographic coordinates.');
+    }
+   *
+   */
   public function refract(Pressure $p = null, Temperature $t = null) {
     if ($this->refracted == true)
       return $this;
@@ -123,6 +164,7 @@ class Horizontal {
 
 
     $this->refracted = true;
+    return $this;
   }
 
   public function defract(Pressure $p = null, Temperature $t = null) {
@@ -133,6 +175,7 @@ class Horizontal {
 
 
     $this->refracted = false;
+    return $this;
   }
 
   public function explodeRad() {
