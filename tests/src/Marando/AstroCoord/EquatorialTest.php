@@ -14,18 +14,18 @@ class EquatorialTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * @covers Marando\AstroCoord\Equatorial::create
-   * @todo   Implement testCreate().
    */
   public function testCreate() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $ra  = Time::hours(13.564323);
+    $dec = Angle::deg(52.23432);
+    $eq  = Equatorial::create($ra, $dec);
+
+    $this->assertEquals($ra, $eq->ra);
+    $this->assertEquals($dec, $eq->dec);
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::ecliptic
-   * @todo   Implement testEcliptic().
    */
   public function testEcliptic() {
     $ecl  = Ecliptic::dmsdms(113, 12, 56.266, 6, 41, 3.011);
@@ -61,51 +61,46 @@ class EquatorialTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * @covers Marando\AstroCoord\Equatorial::angles
-   * @todo   Implement testAngles().
    */
   public function testAngles() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $ra  = Angle::deg(180);
+    $dec = Angle::deg(90);
+    $eq  = Equatorial::angles($ra, $dec);
+
+    $this->assertEquals(12, $eq->ra->hours);
+    $this->assertEquals(90, $eq->dec->deg);
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::deg
-   * @todo   Implement testDeg().
    */
   public function testDeg() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $eq = Equatorial::deg(180, 90);
+    $this->assertEquals(12, $eq->ra->hours);
+    $this->assertEquals(90, $eq->dec->deg);
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::rad
-   * @todo   Implement testRad().
    */
   public function testRad() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $eq = Equatorial::rad(deg2rad(180), deg2rad(90));
+    $this->assertEquals(12, $eq->ra->hours);
+    $this->assertEquals(90, $eq->dec->deg);
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::hmsdms
-   * @todo   Implement testHmsdms().
    */
   public function testHmsdms() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $eq = Equatorial::hmsdms(4, 23, 19.123, 23, 90, 12.245);
+
+    $this->assertEquals(4.3886452778, $eq->ra->hours, 'ra', 1e-3);
+    $this->assertEquals(24.5034, $eq->dec->deg, 'dec', 1e-3);
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::toEcliptic
-   * @todo   Implement testToEcliptic().
    */
   public function testToEcliptic() {
     $eq   = Equatorial::deg(116.328942, 28.026183);
@@ -152,111 +147,20 @@ class EquatorialTest extends \PHPUnit_Framework_TestCase {
 
   /**
    * @covers Marando\AstroCoord\Equatorial::explodeRad
-   * @todo   Implement testExplodeRad().
    */
   public function testExplodeRad() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
+    $eq = Equatorial::hmsdms(23, 9, 16.641, -6, 43, 11.61);
+    $this->assertEquals(
+            [$eq->ra->toAngle()->rad, $eq->dec->rad], $eq->explodeRad());
   }
 
   /**
    * @covers Marando\AstroCoord\Equatorial::explodeDeg
-   * @todo   Implement testExplodeDeg().
    */
   public function testExplodeDeg() {
-    // Remove the following lines when you implement this test.
-    $this->markTestIncomplete(
-            'This test has not been implemented yet.'
-    );
-  }
-
-  /**
-   * @covers Marando\AstroCoord\Equatorial::topo()
-   */
-  public function testGeneric() {
-
-    return;
-
-
-
-
-
-    return;
-    $date = new AstroDate(2003, 8, 28, 3, 16, 59.733);
-
-    $palomar = Geographic::dmsdms(33, 21, 22, -116, 51, 45)
-            ->height(Distance::m(1706));
-
-
-    $mars = Equatorial::hmsdms(22, 38, 7.25, -15, 46, 15.9)
-            ->dist(Distance::au(0.37276));
-
-    echo "\n" . $mars;
-    echo "\n" . $altaz = $mars->toHorizontal($palomar, $date);
-    echo "\n" . $altaz->toEquatorial($palomar, $date);
-
-    return;
-    /*
-      for ($i = 0; $i < 50; $i+=365.25) {
-      echo "\n";
-      $n = \Marando\Meeus\Nutation\Nutation::find(AstroDate::now());
-      echo "\t{$n->long}";
-      echo "\t{$n->obli}";
-      }
-
-
-      return;
-     *
-     */
-
-    $date = new AstroDate(2003, 8, 28, 3, 16, 59.733);
-
-    $palomar = Geographic::dmsdms(33, 21, 22, -116, 51, 45)
-            ->height(Distance::m(1706));
-
-    $mars = Equatorial::hmsdms(22, 38, 7.25, -15, 46, 15.9)
-            ->dist(Distance::au(0.37276));
-
-
-
-    echo "\ngeocentr = " . $mars->topo($palomar, $date);
-    echo "\n    topo = " . $mars->geocentr($palomar, $date);
-
-    //echo "\n\n" . $mars->toHorizontal($date, $palomar)->topo($palomar, $date);
-    //echo "\n" . $mars->toHorizontal($date, $palomar)->geocentr($palomar, $date);
-
-
-    return;
-    $geo = Geographic::create(
-                    Angle::dms(33, 21, 22), Angle::dms(-116, 51, 45),
-                    Distance::m(1706));
-
-    /**
-     * Date is originally 2003-Aug-28 03:17:00, but to adjust for differneces in
-     * sidereal time based on the USNO and Meeus method this time is used to
-     * have the same sidereal time for test purposes
-     */
-    $date = new AstroDate(2003, 8, 28, 3, 16, 59.733);
-
-    //$eq = Equatorial::hmsdms(22, 38, 7.25, -15, 46, 15.9);
-    $eq       = Equatorial::hmsdms(22, 38, 7.25, -15, 46, 15.9);
-    $eq->dist = Distance::au(0.37276);
-
-    echo "\n" . $eq;
-    echo "\n" . $eq->topo($geo, $date);
-    echo "\n" . $eq->geocentr();
-
-    $geo = Geographic::deg(5, 20)->height(Distance::m(1706));
-    $eq  = Equatorial::deg(34, 213)->dist(Distance::au(1.6));
-
-
-    return;
-    echo "\n" . $eq;
-    echo "\n" . $eq->topo($geo, $date);
-    echo "\n" . $eq->topo($geo, $date);
-    echo "\n" . $eq->geocentr($geo, $date);
+    $eq = Equatorial::hmsdms(23, 9, 16.641, -6, 43, 11.61);
+    $this->assertEquals(
+            [$eq->ra->toAngle()->deg, $eq->dec->deg], $eq->explodeDeg());
   }
 
 }
