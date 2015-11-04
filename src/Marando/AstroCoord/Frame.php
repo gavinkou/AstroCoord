@@ -20,6 +20,29 @@
 
 namespace Marando\AstroCoord;
 
-class Galactic {
+use \Marando\AstroDate\Epoch;
+
+class Frame {
+
+  protected $frame;
+  protected $equinox;
+
+  protected function __construct($frame, Epoch $equinox = null) {
+    $this->frame   = $frame;
+    $this->equinox = $equinox;
+  }
+
+  public static function ICRF() {
+    return new static('ICRF', Epoch::J2000());
+  }
+
+  public static function FK5(Epoch $equinox) {
+    return new static('FK5', $equinox);
+  }
+
+  public function __toString() {
+    return "$this->frame/$this->equinox";
+  }
 
 }
+

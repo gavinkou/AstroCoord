@@ -18,8 +18,26 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-namespace Marando\AstroCoord\Arrays;
+namespace Marando\AstroCoord\Traits;
 
-class GeographicArray {
+trait CopyTrait {
+
+  /**
+   * Creates a deep copy of this instance
+   * @return static
+   */
+  public function copy() {
+    return clone $this;
+  }
+
+  /**
+   * Implements the __clone magic method by cloning all object children of this
+   * instance
+   */
+  function __clone() {
+    foreach ($this as $key => $value)
+      if (is_object($value))
+        $this->{$key} = clone $value;
+  }
 
 }

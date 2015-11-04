@@ -4,25 +4,26 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "256472d78b8c910946f85c8a1f277c2c",
+    "hash": "5ac7c41fb8269f8366ce9a667a504b19",
+    "content-hash": "52f17c2290040cb62c3fb639d820570b",
     "packages": [
         {
             "name": "marando/astrodate",
-            "version": "0.2.8",
+            "version": "0.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/AstroDate.git",
-                "reference": "4b3a3969c1f3218a4001302c59d11d023d089c64"
+                "reference": "ba0753154c6b4fc76e4980f970d96588739a51b8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/AstroDate/zipball/4b3a3969c1f3218a4001302c59d11d023d089c64",
-                "reference": "4b3a3969c1f3218a4001302c59d11d023d089c64",
+                "url": "https://api.github.com/repos/marando/AstroDate/zipball/ba0753154c6b4fc76e4980f970d96588739a51b8",
+                "reference": "ba0753154c6b4fc76e4980f970d96588739a51b8",
                 "shasum": ""
             },
             "require": {
-                "marando/meeus-nutation": "^0.2.6",
-                "marando/units": "^0.3",
+                "marando/php-sofa": "^0.2",
+                "marando/units": "^0.3.2",
                 "php": "^5.5"
             },
             "require-dev": {
@@ -45,25 +46,21 @@
                 }
             ],
             "description": "A PHP Date/Time class with useful Astronomy related functionality ",
-            "time": "2015-10-24 07:59:31"
+            "time": "2015-10-30 19:44:07"
         },
         {
-            "name": "marando/meeus-nutation",
-            "version": "0.2.6",
+            "name": "marando/php-sofa",
+            "version": "0.2-alpha.3",
             "source": {
                 "type": "git",
-                "url": "https://github.com/marando/Meeus-Nutation.git",
-                "reference": "0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59"
+                "url": "https://github.com/marando/phpSOFA.git",
+                "reference": "1a0ac321dc62692d3e9f046b9a68914c46ebb85a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/Meeus-Nutation/zipball/0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59",
-                "reference": "0b5c7eac9b16102d3e84d5e3e037cf0eb6a88a59",
+                "url": "https://api.github.com/repos/marando/phpSOFA/zipball/1a0ac321dc62692d3e9f046b9a68914c46ebb85a",
+                "reference": "1a0ac321dc62692d3e9f046b9a68914c46ebb85a",
                 "shasum": ""
-            },
-            "require": {
-                "marando/astrodate": "^0.2.8",
-                "marando/units": "^0.3"
             },
             "require-dev": {
                 "phpunit/phpunit": "^5.0"
@@ -84,21 +81,21 @@
                     "email": "a.marando@me.com"
                 }
             ],
-            "description": "A PHP implementation of the Nutation methods discussed in \"Astronomical Algorithms\" by J. Meeus",
-            "time": "2015-10-24 08:02:06"
+            "description": "A PHP port of the IAU SOFA Library",
+            "time": "2015-11-01 06:29:47"
         },
         {
             "name": "marando/units",
-            "version": "0.3.1",
+            "version": "0.3.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/Units.git",
-                "reference": "dc4c574430334f4cc6a98ca48e49bf44de717e39"
+                "reference": "8f10f2082f4304d573a0a6bd42814faaa4211963"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/Units/zipball/dc4c574430334f4cc6a98ca48e49bf44de717e39",
-                "reference": "dc4c574430334f4cc6a98ca48e49bf44de717e39",
+                "url": "https://api.github.com/repos/marando/Units/zipball/8f10f2082f4304d573a0a6bd42814faaa4211963",
+                "reference": "8f10f2082f4304d573a0a6bd42814faaa4211963",
                 "shasum": ""
             },
             "require": {
@@ -124,7 +121,7 @@
                 }
             ],
             "description": "A PHP package consisting of classes representing units of measure",
-            "time": "2015-10-24 17:10:26"
+            "time": "2015-10-30 03:13:52"
         }
     ],
     "packages-dev": [
@@ -1118,23 +1115,20 @@
         },
         {
             "name": "symfony/yaml",
-            "version": "v2.7.5",
+            "version": "v2.7.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/yaml.git",
-                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770"
+                "reference": "eca9019c88fbe250164affd107bc8057771f3f4d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/yaml/zipball/31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
-                "reference": "31cb2ad0155c95b88ee55fe12bc7ff92232c1770",
+                "url": "https://api.github.com/repos/symfony/yaml/zipball/eca9019c88fbe250164affd107bc8057771f3f4d",
+                "reference": "eca9019c88fbe250164affd107bc8057771f3f4d",
                 "shasum": ""
             },
             "require": {
                 "php": ">=5.3.9"
-            },
-            "require-dev": {
-                "symfony/phpunit-bridge": "~2.7"
             },
             "type": "library",
             "extra": {
@@ -1163,13 +1157,13 @@
             ],
             "description": "Symfony Yaml Component",
             "homepage": "https://symfony.com",
-            "time": "2015-09-14 14:14:09"
+            "time": "2015-10-11 09:39:48"
         }
     ],
     "aliases": [],
-    "minimum-stability": "stable",
+    "minimum-stability": "alpha",
     "stability-flags": [],
-    "prefer-stable": false,
+    "prefer-stable": true,
     "prefer-lowest": false,
     "platform": [],
     "platform-dev": []

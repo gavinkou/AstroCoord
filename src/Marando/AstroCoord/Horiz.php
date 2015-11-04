@@ -18,8 +18,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-namespace Marando\AstroCoord\Arrays;
+namespace Marando\AstroCoord;
 
-class CartesianArray {
+use \Marando\Units\Angle;
+
+// Can only be apparent
+
+class Horiz {
+
+  protected $alt;
+  protected $az;
+
+  public function __construct(Angle $alt, Angle $az) {
+    $this->alt = $alt;
+    $this->az  = $az;
+  }
+
+  public function __toString() {
+     return "Alt $this->alt Az $this->az";
+  }
 
 }

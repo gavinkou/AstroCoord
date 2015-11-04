@@ -18,27 +18,14 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-namespace Marando\AstroCoord\Objects;
+namespace Marando\AstroCoord;
 
-/**
- * @property Equatorial $position
- * @property PropMotion $motion
- * @property string     $name
- * @property string     $code
- */
-class Star {
+use \Marando\AstroCoord\Equat;
 
-}
+class Star extends Equat {
 
+  //public function apparent(Date Geo $geo = null) {
 
-////  this goes in the Meeus-Precession package
-/**
- * @property Angle    $ra
- * @property Angle    $dec
- * @property Angle    $paralax
- * @property Distance $dist
- * @property Velocity $velocity
- */
-class ProperMotion {
+  //}
 
 }

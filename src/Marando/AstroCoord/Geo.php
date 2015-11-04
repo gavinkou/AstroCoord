@@ -18,8 +18,34 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-namespace Marando\AstroCoord\Arrays;
+namespace Marando\AstroCoord;
 
-class HorizontalArray {
+use \Marando\Units\Angle;
+
+/**
+ * @property Angle $lat
+ * @property Angle $lon
+ */
+class Geo {
+
+  protected $lat;
+  protected $lon;
+
+  public function __get($name) {
+    switch ($name) {
+      case 'lat':
+      case 'lon':
+        return $this->{$name};
+    }
+  }
+
+  public function __construct(Angle $lat, Angle $lon) {
+    $this->lat = $lat;
+    $this->lon = $lon;
+  }
+
+  public static function deg($lat, $lon) {
+    return new static(Angle::deg($lat), Angle::deg($lon));
+  }
 
 }
