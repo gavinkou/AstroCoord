@@ -86,16 +86,16 @@
         },
         {
             "name": "marando/units",
-            "version": "0.3.2",
+            "version": "0.3.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/Units.git",
-                "reference": "8f10f2082f4304d573a0a6bd42814faaa4211963"
+                "reference": "c045c664f1aa6b68cb2aa0a566675f09126015b2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/Units/zipball/8f10f2082f4304d573a0a6bd42814faaa4211963",
-                "reference": "8f10f2082f4304d573a0a6bd42814faaa4211963",
+                "url": "https://api.github.com/repos/marando/Units/zipball/c045c664f1aa6b68cb2aa0a566675f09126015b2",
+                "reference": "c045c664f1aa6b68cb2aa0a566675f09126015b2",
                 "shasum": ""
             },
             "require": {
@@ -121,7 +121,7 @@
                 }
             ],
             "description": "A PHP package consisting of classes representing units of measure",
-            "time": "2015-10-30 03:13:52"
+            "time": "2015-11-05 04:53:45"
         }
     ],
     "packages-dev": [

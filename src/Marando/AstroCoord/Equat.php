@@ -20,6 +20,8 @@
 
 namespace Marando\AstroCoord;
 
+use \Marando\Units\Pressure;
+use \Marando\Units\Temperature;
 use \Marando\AstroDate\Epoch;
 use \Marando\AstroDate\AstroDate;
 use \Marando\Units\Distance;
@@ -29,42 +31,121 @@ use \Marando\Units\Time;
 use \Marando\IAU\IAU;
 use \Marando\AstroCoord\Geo;
 
+/**
+ * Represents an equatorial coordinate
+ *
+ * @param Frame $frame Reference frame
+ * @param Epoch $epoch Observation epoch
+ * @param Time  $ra    Right ascension
+ * @param Angle $dec   Declination
+ */
 class Equat {
 
   use Traits\CopyTrait;
 
-  protected $frame;
-  protected $epoch;
-  protected $ra;
-  protected $dec;
-  protected $apparent;
+  //----------------------------------------------------------------------------
+  // Constructors
+  //----------------------------------------------------------------------------
 
+  /**
+   * Creates a new equatorial coordinate
+   *
+   * @param Frame    $frame Reference frame
+   * @param Epoch    $epoch Observation epoch
+   * @param Time     $ra    Right ascension
+   * @param Angle    $dec   Declination
+   * @param Distance $dist  Distance
+   */
   public function __construct(Frame $frame, Epoch $epoch, Time $ra, Angle $dec,
           Distance $dist) {
 
+    // Set reference frame and observation epoch
     $this->frame = $frame;
     $this->epoch = $epoch;
-    $this->ra    = $ra->setUnit('hsm');
-    $this->dec   = $dec;
+
+    // Set right ascension, declination and distance
+    $this->ra       = $ra->setUnit('hsm');
+    $this->dec      = $dec;
+    $this->dist = $dist;
   }
+
+  //----------------------------------------------------------------------------
+  // Properties
+  //----------------------------------------------------------------------------
+
+  /**
+   * Reference frame
+   * @var Frame
+   */
+  protected $frame;
+
+  /**
+   * Observation epoch
+   * @var Epoch
+   */
+  protected $epoch;
+
+  /**
+   * Right ascension
+   * @var Time
+   */
+  protected $ra;
+
+  /**
+   * Declination
+   * @var Angle
+   */
+  protected $dec;
+
+  /**
+   * Distance
+   * @var Distance
+   */
+  protected $dist;
+
+  /**
+   * If the coordinates are apparent
+   * @var bool
+   */
+  protected $apparent;
 
   public function __get($name) {
     switch ($name) {
+      case 'frame':
+      case 'epoch':
       case 'ra':
       case 'dec':
+      case 'dist':
         return $this->{$name};
     }
   }
 
-  public function apparent(Geo $geo = null) {
+  //----------------------------------------------------------------------------
+  // Functions
+  //----------------------------------------------------------------------------
+
+  /**
+   * Returns the apparent coordinates of this instance for a given location
+   *
+   * @param  Geo         $geo      Geographic observation location
+   * @param  Pressure    $pressure Atmospheric pressure
+   * @param  Temperature $temp     Atmospheric temperature
+   * @param  float       $humidity Relative humidity
+   * @return static
+   */
+  public function apparent(Geo $geo = null, Pressure $pressure = null,
+          Temperature $temp = null, $humidity = null) {
+
+    // Check if instance has aleady been converte to apparent
     if ($this->apparent)
       return $this->copy();
 
+    // Set up parameters requred by IAU apparent algorithm
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
     $pr    = 0;
     $pd    = 0;
-    $px    = 0; //$this->dist->toParallax()->arcsec;
+    $px    = $this->dist->toParallax()->rad;
     $rv    = 0;
     $utc1  = $this->epoch->toDate()->toUT1()->jd;
     $utc2  = 0;
@@ -74,26 +155,40 @@ class Equat {
     $hm    = 0;
     $xp    = 0;
     $yp    = 0;
-    $phpa  = 731;
-    $tc    = 12.8;
-    $rh    = 0.7;
+    $phpa  = $pressure ? $pressure->mbar : 1000;
+    $tc    = $temp ? $temp->C : 15;
+    $rh    = $humidity ? $humidity : 0.7;
     $wl    = 0.55;
 
+    // Run the conversion
     IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
             $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
             $eo);
 
-    $copy = $this->copy();
+    // Copy this instance, and override the apparent RA and Decl
+    $apparent           = $this->copy();
+    $apparent->ra       = Angle::rad($rob)->toTime();
+    $apparent->dec      = Angle::rad($dob);
+    $apparent->apparent = true;
 
-    $copy->ra  = Angle::rad($rob)->toTime();
-    $copy->dec = Angle::rad($dob);
-
-    $copy->apparent = true;
-    return $copy;
+    // Return apparent coordinates
+    return $apparent;
   }
 
-  public function toHoriz(Geo $geo) {
-    $apparent = $this->copy()->apparent($geo);
+  /**
+   * Converts this instance to horizontal coordinates
+   *
+   * @param  Geo         $geo      Geographic observation location
+   * @param  Pressure    $pressure Atmospheric pressure
+   * @param  Temperature $temp     Atmospheric temperature
+   * @param  float       $humidity Relative humidity
+   * @return static
+   */
+  public function toHoriz(Geo $geo = null, Pressure $pressure = null,
+          Temperature $temp = null, $humidity = null) {
+
+    // Copy the apparent coordinates of this instance, and get observation date
+    $apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
     $date     = $this->epoch->toDate();
 
     // Local apparant sidereal time and local hour angle
@@ -112,9 +207,16 @@ class Equat {
     $az  = atan(sin($H) / (cos($H) * sin($φ) - tan($δ) * cos($φ)));
     $alt = asin(sin($φ) * sin($δ) + cos($φ) * cos($δ) * cos($H));
 
+    // Return new horizontal coordinate instance
     return new Horiz(Angle::rad($alt), Angle::rad($az)->norm());
   }
 
+  // // // Overrides
+
+  /**
+   * Represents this instance as a string
+   * @return string
+   */
   public function __toString() {
     if ($this->apparent)
       return "RA $this->ra Dec $this->dec ($this->epoch apparent)";
@@ -123,18 +225,3 @@ class Equat {
   }
 
 }
-
-/**
- * ->apparent(Date, temp, etc...)
- *    - calls IAU func to make apparent
- *    - stores parameters
- *    - modifies class to store apparent position KEEPS old astrometric
- *    - if called again with no parameters returns apparent calc before
- *    - if called again with diff params, uses old astro to recompute
- *
- * ->astrometric(Date, temp, etc...)
- *    - if called with no params and instance is apparent, returns the old astro one
- *    - if instance is not astrometric, and params computes astrometric
- *    - if instance is not astrometric, and no params throws error?
- *
- */

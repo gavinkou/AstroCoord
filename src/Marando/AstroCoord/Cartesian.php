@@ -28,6 +28,19 @@ use \Marando\Units\Distance;
 use \Marando\Units\Velocity;
 use \Marando\IAU\IAU;
 
+/**
+ * Represents a Cartesian XYZ position and velocity vector
+ *
+ * @property Frame    $frame Reference frame
+ * @property Epoch    $epoch Observation epoch
+ * @property Distance $x     x position
+ * @property Distance $y     y position
+ * @property Distance $z     z position
+ * @property Velocity $vx    x velocity
+ * @property Velocity $vy    y velocity
+ * @property Velocity $vz    z velocity
+ * @property Distance $r     Radial distance, r
+ */
 class Cartesian {
 
   use Traits\CopyTrait,
@@ -49,7 +62,6 @@ class Cartesian {
    * @param Velocity $vx    x velocity
    * @param Velocity $vy    y velocity
    * @param Velocity $vz    z velocity
-   * @param Distance $r     Radial distance, r
    */
   public function __construct(Frame $frame, Epoch $epoch, Distance $x,
           Distance $y, Distance $z, Velocity $vx = null, Velocity $vy = null,
@@ -148,22 +160,32 @@ class Cartesian {
 
   /**
    * Adds another cartesian vector to this instance
-   * @param Cartesian $b
+   * @param static $b
    */
   public function add(Cartesian $b) {
     $this->x->add($b->x);
     $this->y->add($b->y);
     $this->z->add($b->z);
+    $this->vx->add($b->vx);
+    $this->vy->add($b->vy);
+    $this->vz->add($b->vz);
+
+    return $this;
   }
 
   /**
    * Subtracts another cartesian vector from this instance
-   * @param Cartesian $b
+   * @param static $b
    */
   public function subtract(Cartesian $b) {
     $this->x->subtract($b->x);
     $this->y->subtract($b->y);
     $this->z->subtract($b->z);
+    $this->vx->subtract($b->vx);
+    $this->vy->subtract($b->vy);
+    $this->vz->subtract($b->vz);
+
+    return $this;
   }
 
   /**
