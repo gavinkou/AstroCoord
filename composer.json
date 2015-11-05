@@ -1,0 +1,25 @@
+{
+  "name": "marando/astrocoord",
+  "description": "A PHP package of objects representing astronomical coordinate systems",
+  "require": {
+    "marando/units": "^0.3.2",
+    "marando/astrodate": "^0.3.2"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^5.0"
+  },
+  "license": "GNU2",
+  "authors": [
+    {
+      "name": "Ashley Marando",
+      "email": "a.marando@me.com"
+    }
+  ],
+  "minimum-stability": "alpha",
+  "prefer-stable": true,
+  "autoload": {
+    "psr-0": {
+      "Marando": "src/"
+    }
+  }
+}
