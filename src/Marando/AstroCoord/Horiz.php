@@ -24,6 +24,10 @@ use \Marando\Units\Angle;
 
 // Can only be apparent
 
+/**
+ * @property Angle $alt Altitude
+ * @property Angle $az  Azimuth
+ */
 class Horiz {
 
   protected $alt;
@@ -34,8 +38,16 @@ class Horiz {
     $this->az  = $az;
   }
 
+  public function __get($name) {
+    switch ($name) {
+      case 'alt':
+      case 'az':
+        return $this->{$name};
+    }
+  }
+
   public function __toString() {
-     return "Alt $this->alt Az $this->az";
+    return "Alt $this->alt Az $this->az";
   }
 
 }

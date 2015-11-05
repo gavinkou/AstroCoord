@@ -20,6 +20,7 @@
 
 namespace Marando\AstroCoord;
 
+use \Marando\AstroCoord\Horiz;
 use \Marando\Units\Pressure;
 use \Marando\Units\Temperature;
 use \Marando\AstroDate\Epoch;
@@ -64,8 +65,8 @@ class Equat {
     $this->epoch = $epoch;
 
     // Set right ascension, declination and distance
-    $this->ra       = $ra->setUnit('hsm');
-    $this->dec      = $dec;
+    $this->ra   = $ra->setUnit('hsm');
+    $this->dec  = $dec;
     $this->dist = $dist;
   }
 
@@ -145,7 +146,7 @@ class Equat {
     $dc    = $this->dec->rad;
     $pr    = 0;
     $pd    = 0;
-    $px    = $this->dist->toParallax()->rad;
+    $px    = $this->dist->m > 0 ? $this->dist->toParallax()->rad : 1e-13;
     $rv    = 0;
     $utc1  = $this->epoch->toDate()->toUT1()->jd;
     $utc2  = 0;
@@ -182,7 +183,7 @@ class Equat {
    * @param  Pressure    $pressure Atmospheric pressure
    * @param  Temperature $temp     Atmospheric temperature
    * @param  float       $humidity Relative humidity
-   * @return static
+   * @return Horiz
    */
   public function toHoriz(Geo $geo = null, Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
@@ -192,7 +193,7 @@ class Equat {
     $date     = $this->epoch->toDate();
 
     // Local apparant sidereal time and local hour angle
-    $last = $date->gast($geo->lon);
+    $last = $date->gast($geo ? $geo->lon : null);
     $H    = $last->copy()->subtract($apparent->ra)->toAngle()->rad;
 
     // Get right ascension and declination as radians
@@ -200,8 +201,8 @@ class Equat {
     $δ = $apparent->dec->rad;
 
     // Get geographic longitude as radians
-    $φ = $geo->lat->rad;
-    $ψ = $geo->lon->rad;
+    $φ = $geo ? $geo->lat->rad : 0;
+    $ψ = $geo ? $geo->lon->rad : 0;
 
     // Calculate alt/az
     $az  = atan(sin($H) / (cos($H) * sin($φ) - tan($δ) * cos($φ)));
