@@ -39,6 +39,7 @@ use \Marando\AstroCoord\Geo;
  * @param Epoch $epoch Observation epoch
  * @param Time  $ra    Right ascension
  * @param Angle $dec   Declination
+ * @param Geo   $obsrv Geographic observation location
  */
 class Equat {
 
@@ -110,6 +111,14 @@ class Equat {
    */
   protected $apparent;
 
+  /**
+   * Geographic observation location
+   * @var Geo
+   */
+  protected $obsrv;
+
+  protected $astrom;
+
   public function __get($name) {
     switch ($name) {
       case 'frame':
@@ -117,7 +126,15 @@ class Equat {
       case 'ra':
       case 'dec':
       case 'dist':
+      case 'obsrv':
         return $this->{$name};
+    }
+  }
+
+  public function __set($name, $value) {
+    switch ($name) {
+      case 'obsrv':
+        $this->{$name} = $value;
     }
   }
 
@@ -134,12 +151,16 @@ class Equat {
    * @param  float       $humidity Relative humidity
    * @return static
    */
-  public function apparent(Geo $geo = null, Pressure $pressure = null,
+  public function apparent(/*Geo $geo = null,*/ Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
     // Check if instance has aleady been converte to apparent
     if ($this->apparent)
       return $this->copy();
+
+    $this->astrom = $this->copy();
+
+    $geo = $this->obsrv ? $this->obsrv : $geo;
 
     // Set up parameters requred by IAU apparent algorithm
     $rc    = $this->ra->toAngle()->rad;
@@ -185,20 +206,54 @@ class Equat {
    * @param  float       $humidity Relative humidity
    * @return Horiz
    */
-  public function toHoriz(Geo $geo = null, Pressure $pressure = null,
+  public function toHoriz(/*Geo $geo = null, */Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
+    $radec = $this->astrom ? $this->astrom : $this;
+
+    $geo = $this->obsrv ? $this->obsrv : $geo;
+
+    // Set up parameters requred by IAU apparent algorithm
+    $rc    = $radec->ra->toAngle()->rad;
+    $dc    = $radec->dec->rad;
+    $pr    = 0;
+    $pd    = 0;
+    $px    = $radec->dist->m > 0 ? $radec->dist->toParallax()->rad : 1e-13;
+    $rv    = 0;
+    $utc1  = $radec->epoch->toDate()->toUT1()->jd;
+    $utc2  = 0;
+    $dut1  = 0.155;
+    $elong = $geo ? $geo->lon->rad : 0;
+    $phi   = $geo ? $geo->lat->rad : 0;
+    $hm    = 0;
+    $xp    = 0;
+    $yp    = 0;
+    $phpa  = $pressure ? $pressure->mbar : 1000;
+    $tc    = $temp ? $temp->C : 15;
+    $rh    = $humidity ? $humidity : 0.7;
+    $wl    = 0.55;
+
+    // Run the conversion
+    IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
+            $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
+            $eo);
+
+
+    return new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
+
+
+    return;
     // Copy the apparent coordinates of this instance, and get observation date
-    $apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
-    $date     = $this->epoch->toDate();
+    //$apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
+    $date = $this->epoch->toDate();
 
     // Local apparant sidereal time and local hour angle
     $last = $date->gast($geo ? $geo->lon : null);
-    $H    = $last->copy()->subtract($apparent->ra)->toAngle()->rad;
+    $H    = $last->copy()->subtract($radec->ra)->toAngle()->rad;
 
     // Get right ascension and declination as radians
-    $α = $apparent->ra->toAngle()->rad;
-    $δ = $apparent->dec->rad;
+    $α = $radec->ra->toAngle()->rad;
+    $δ = $radec->dec->rad;
 
     // Get geographic longitude as radians
     $φ = $geo ? $geo->lat->rad : 0;
@@ -219,6 +274,29 @@ class Equat {
    * @return string
    */
   public function __toString() {
+    $drFormat = "%+03.0f";
+    $ddFormat = "%+03.0f";
+    $mFormat  = "%02.0f";
+    $sFormat  = "%02.0f";
+    $rD       = sprintf($drFormat, $this->ra->h);
+    $rM       = sprintf($mFormat, abs($this->ra->m));
+    $rS       = sprintf($sFormat, abs($this->ra->s));
+    $dD       = sprintf($ddFormat, abs($this->dec->d));
+    $dM       = sprintf($mFormat, abs($this->dec->m));
+    $dS       = sprintf($sFormat, abs($this->dec->s));
+    $rmic     = str_replace('0.', '', round(abs($this->ra->micro), 3));
+    $rmic     = str_pad($rmic, 3, '0', STR_PAD_RIGHT);
+    $dmic     = str_replace('0.', '',
+            round(abs(intval($this->dec->s) - $this->dec->s), 3));
+    $dmic     = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
+    $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
+
+    $frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
+
+    return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
+
+
+
     if ($this->apparent)
       return "RA $this->ra Dec $this->dec ($this->epoch apparent)";
     else
