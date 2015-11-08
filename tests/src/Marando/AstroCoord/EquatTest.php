@@ -22,14 +22,15 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $epoch = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
     $ra    = Time::hms(22, 51, 15.99);
     $dec   = Angle::dms(-9, 45, 03.3);
+    $geo   = Geo::deg(27, -82);
 
-    $astrom = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
+    $astrom        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
+    $astrom->obsrv = $geo;
 
-    $geo      = Geo::deg(27, -82);
     $pressure = Pressure::inHg(30);
     $temp     = Temperature::F(75);
     $humidity = 0.7;
-    $app      = $astrom->apparent($geo, $pressure, $temp, $humidity);
+    $app      = $astrom->apparent($pressure, $temp, $humidity);
 
     // TODO: Figure out why this inst exact
     $this->assertEquals(343.60341, $app->ra->toAngle()->deg, 'ra', 1);
@@ -40,16 +41,19 @@ class EquatTest extends PHPUnit_Framework_TestCase {
    * @covers Marando\AstroCoord\Equat::toHoriz
    */
   public function testToHoriz() {
-    $epoch  = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
-    $ra     = Time::hms(22, 51, 15.99);
-    $dec    = Angle::dms(-9, 45, 03.3);
-    $geo    = Geo::deg(27, -82);
-    $astrom = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
-    $horiz  = $astrom->toHoriz($geo);
+    $epoch = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
+    $ra    = Time::hms(22, 51, 15.99);
+    $dec   = Angle::dms(-9, 45, 03.3);
+    $geo   = Geo::deg(27, -82);
+
+    $astr        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
+    $astr->obsrv = $geo;
+
+    $horiz = $astr->toHoriz();
 
     // TODO: Figure out why this inst exact
     $this->assertEquals(-23.4393, $horiz->alt->deg, 'alt', 1);
-    $this->assertEquals(271.2178, $horiz->az->deg, 'az', 0.25);
+    $this->assertEquals(271.2178, $horiz->az->deg, 'az', 0.5);
   }
 
 }
