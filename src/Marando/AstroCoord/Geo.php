@@ -21,12 +21,14 @@
 namespace Marando\AstroCoord;
 
 use \Marando\Units\Angle;
+use \Marando\Units\Distance;
 
 /**
  * Represents a geographic location
  *
- * @property Angle $lat Latitude
- * @property Angle $lon Longitude
+ * @property Angle    $lat    Latitude
+ * @property Angle    $lon    Longitude
+ * @property Distance $height Height above sea level
  */
 class Geo {
   //----------------------------------------------------------------------------
@@ -39,9 +41,10 @@ class Geo {
    * @param Angle $lat Latitude
    * @param Angle $lon Longitude, West negative
    */
-  public function __construct(Angle $lat, Angle $lon) {
-    $this->lat = $lat->norm(0, 90);
-    $this->lon = $lon->norm(-90, 90);
+  public function __construct(Angle $lat, Angle $lon, Distance $height = null) {
+    $this->lat    = $lat->norm(-90, 90);
+    $this->lon    = $lon->norm(-180, 180);
+    $this->height = $height ? $height : Distance::m(0);
   }
 
   // // // Static
@@ -53,8 +56,8 @@ class Geo {
    * @param  float  $lon Longitude, degrees West negative
    * @return static
    */
-  public static function deg($lat, $lon) {
-    return new static(Angle::deg($lat), Angle::deg($lon));
+  public static function deg($lat, $lon, Distance $height = null) {
+    return new static(Angle::deg($lat), Angle::deg($lon), $height);
   }
 
   /**
@@ -64,8 +67,8 @@ class Geo {
    * @param  float  $lon Longitude, radians West negative
    * @return static
    */
-  public static function rad($lat, $lon) {
-    return new static(Angle::rad($lat), Angle::rad($lon));
+  public static function rad($lat, $lon, Distance $height = null) {
+    return new static(Angle::rad($lat), Angle::rad($lon), $height);
   }
 
   //----------------------------------------------------------------------------
@@ -84,10 +87,17 @@ class Geo {
    */
   protected $lon;
 
+  /**
+   * Height above sea level
+   * @var Distance
+   */
+  protected $height;
+
   public function __get($name) {
     switch ($name) {
       case 'lat':
       case 'lon':
+      case 'height':
         return $this->{$name};
     }
   }

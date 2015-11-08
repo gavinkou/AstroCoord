@@ -50,16 +50,16 @@
         },
         {
             "name": "marando/php-sofa",
-            "version": "0.2-alpha.3",
+            "version": "0.2-alpha.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/phpSOFA.git",
-                "reference": "1a0ac321dc62692d3e9f046b9a68914c46ebb85a"
+                "reference": "e1d578980ee042da9d273138881a0f24a1646822"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/phpSOFA/zipball/1a0ac321dc62692d3e9f046b9a68914c46ebb85a",
-                "reference": "1a0ac321dc62692d3e9f046b9a68914c46ebb85a",
+                "url": "https://api.github.com/repos/marando/phpSOFA/zipball/e1d578980ee042da9d273138881a0f24a1646822",
+                "reference": "e1d578980ee042da9d273138881a0f24a1646822",
                 "shasum": ""
             },
             "require-dev": {
@@ -82,7 +82,7 @@
                 }
             ],
             "description": "A PHP port of the IAU SOFA Library",
-            "time": "2015-11-01 06:29:47"
+            "time": "2015-11-07 07:00:30"
         },
         {
             "name": "marando/units",

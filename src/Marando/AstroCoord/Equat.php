@@ -20,29 +20,25 @@
 
 namespace Marando\AstroCoord;
 
-use \Marando\AstroCoord\Horiz;
-use \Marando\Units\Pressure;
-use \Marando\Units\Temperature;
-use \Marando\AstroDate\Epoch;
-use \Marando\AstroDate\AstroDate;
-use \Marando\Units\Distance;
-use \Marando\Units\Velocity;
-use \Marando\Units\Angle;
-use \Marando\Units\Time;
-use \Marando\IAU\IAU;
 use \Marando\AstroCoord\Geo;
+use \Marando\AstroCoord\Horiz;
+use \Marando\AstroDate\AstroDate;
+use \Marando\IAU\IAU;
+use \Marando\Units\Angle;
+use \Marando\Units\Distance;
+use \Marando\Units\Time;
+use \Marando\IAU\iauRefEllips;
 
 /**
  * Represents an equatorial coordinate
  *
- * @param Frame $frame Reference frame
- * @param Epoch $epoch Observation epoch
- * @param Time  $ra    Right ascension
- * @param Angle $dec   Declination
+ * @param Time     $ra   Right ascension
+ * @param Angle    $dec  Declination
+ * @param Distance $dist Distance
  */
 class Equat {
 
-  use Traits\CopyTrait;
+  use \Marando\AstroCoord\Traits\CopyTrait;
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -51,21 +47,14 @@ class Equat {
   /**
    * Creates a new equatorial coordinate
    *
-   * @param Frame    $frame Reference frame
-   * @param Epoch    $epoch Observation epoch
-   * @param Time     $ra    Right ascension
-   * @param Angle    $dec   Declination
-   * @param Distance $dist  Distance
+   * @param Time     $ra   Right ascension
+   * @param Angle    $dec  Declination
+   * @param Distance $dist Distance
    */
-  public function __construct(Frame $frame, Epoch $epoch, Time $ra, Angle $dec,
-          Distance $dist) {
-
-    // Set reference frame and observation epoch
-    $this->frame = $frame;
-    $this->epoch = $epoch;
+  public function __construct(Time $ra, Angle $dec, Distance $dist = null) {
 
     // Set right ascension, declination and distance
-    $this->ra   = $ra->setUnit('hsm');
+    $this->ra   = $ra->setUnit('hms');
     $this->dec  = $dec;
     $this->dist = $dist;
   }
@@ -73,18 +62,6 @@ class Equat {
   //----------------------------------------------------------------------------
   // Properties
   //----------------------------------------------------------------------------
-
-  /**
-   * Reference frame
-   * @var Frame
-   */
-  protected $frame;
-
-  /**
-   * Observation epoch
-   * @var Epoch
-   */
-  protected $epoch;
 
   /**
    * Right ascension
@@ -104,16 +81,8 @@ class Equat {
    */
   protected $dist;
 
-  /**
-   * If the coordinates are apparent
-   * @var bool
-   */
-  protected $apparent;
-
   public function __get($name) {
     switch ($name) {
-      case 'frame':
-      case 'epoch':
       case 'ra':
       case 'dec':
       case 'dist':
@@ -125,91 +94,16 @@ class Equat {
   // Functions
   //----------------------------------------------------------------------------
 
-  /**
-   * Returns the apparent coordinates of this instance for a given location
-   *
-   * @param  Geo         $geo      Geographic observation location
-   * @param  Pressure    $pressure Atmospheric pressure
-   * @param  Temperature $temp     Atmospheric temperature
-   * @param  float       $humidity Relative humidity
-   * @return static
-   */
-  public function apparent(Geo $geo = null, Pressure $pressure = null,
-          Temperature $temp = null, $humidity = null) {
+  public function toCartesian() {
+    // Spherical -> cartesian position vector
+    $p = [];
+    IAU::S2p($this->ra->toAngle()->rad, $this->dec->rad, $this->dist->au, $p);
 
-    // Check if instance has aleady been converte to apparent
-    if ($this->apparent)
-      return $this->copy();
+    $x = Distance::au($p[0]);
+    $y = Distance::au($p[1]);
+    $z = Distance::au($p[2]);
 
-    // Set up parameters requred by IAU apparent algorithm
-    $rc    = $this->ra->toAngle()->rad;
-    $dc    = $this->dec->rad;
-    $pr    = 0;
-    $pd    = 0;
-    $px    = $this->dist->m > 0 ? $this->dist->toParallax()->rad : 1e-13;
-    $rv    = 0;
-    $utc1  = $this->epoch->toDate()->toUT1()->jd;
-    $utc2  = 0;
-    $dut1  = 0.155;
-    $elong = $geo ? $geo->lon->rad : 0;
-    $phi   = $geo ? $geo->lat->rad : 0;
-    $hm    = 0;
-    $xp    = 0;
-    $yp    = 0;
-    $phpa  = $pressure ? $pressure->mbar : 1000;
-    $tc    = $temp ? $temp->C : 15;
-    $rh    = $humidity ? $humidity : 0.7;
-    $wl    = 0.55;
-
-    // Run the conversion
-    IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
-            $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
-            $eo);
-
-    // Copy this instance, and override the apparent RA and Decl
-    $apparent           = $this->copy();
-    $apparent->ra       = Angle::rad($rob)->toTime();
-    $apparent->dec      = Angle::rad($dob);
-    $apparent->apparent = true;
-
-    // Return apparent coordinates
-    return $apparent;
-  }
-
-  /**
-   * Converts this instance to horizontal coordinates
-   *
-   * @param  Geo         $geo      Geographic observation location
-   * @param  Pressure    $pressure Atmospheric pressure
-   * @param  Temperature $temp     Atmospheric temperature
-   * @param  float       $humidity Relative humidity
-   * @return Horiz
-   */
-  public function toHoriz(Geo $geo = null, Pressure $pressure = null,
-          Temperature $temp = null, $humidity = null) {
-
-    // Copy the apparent coordinates of this instance, and get observation date
-    $apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
-    $date     = $this->epoch->toDate();
-
-    // Local apparant sidereal time and local hour angle
-    $last = $date->gast($geo ? $geo->lon : null);
-    $H    = $last->copy()->subtract($apparent->ra)->toAngle()->rad;
-
-    // Get right ascension and declination as radians
-    $α = $apparent->ra->toAngle()->rad;
-    $δ = $apparent->dec->rad;
-
-    // Get geographic longitude as radians
-    $φ = $geo ? $geo->lat->rad : 0;
-    $ψ = $geo ? $geo->lon->rad : 0;
-
-    // Calculate alt/az
-    $az  = atan(sin($H) / (cos($H) * sin($φ) - tan($δ) * cos($φ)));
-    $alt = asin(sin($φ) * sin($δ) + cos($φ) * cos($δ) * cos($H));
-
-    // Return new horizontal coordinate instance
-    return new Horiz(Angle::rad($alt), Angle::rad($az)->norm());
+    return new Cartesian($x, $y, $z);
   }
 
   // // // Overrides
@@ -219,10 +113,28 @@ class Equat {
    * @return string
    */
   public function __toString() {
-    if ($this->apparent)
-      return "RA $this->ra Dec $this->dec ($this->epoch apparent)";
-    else
-      return "RA $this->ra Dec $this->dec ($this->frame)";
+    $drFormat = "%+03.0f";
+    $ddFormat = "%+03.0f";
+    $mFormat  = "%02.0f";
+    $sFormat  = "%02.0f";
+
+    $rD = sprintf($drFormat, $this->ra->h);
+    $rM = sprintf($mFormat, abs($this->ra->m));
+    $rS = sprintf($sFormat, abs($this->ra->s));
+
+    $dD = sprintf($ddFormat, abs($this->dec->d));
+    $dM = sprintf($mFormat, abs($this->dec->m));
+    $dS = sprintf($sFormat, abs($this->dec->s));
+
+    $rmic = str_replace('0.', '', round(abs($this->ra->micro), 3));
+    $rmic = str_pad($rmic, 3, '0', STR_PAD_RIGHT);
+
+    $dmic = str_replace('0.', '',
+            round(abs(intval($this->dec->s) - $this->dec->s), 3));
+    $dmic = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
+
+    $dist='';//$dist = $this->dist ? " Dist {$this->dist}" : '';
+    return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic}{$dist}";
   }
 
 }

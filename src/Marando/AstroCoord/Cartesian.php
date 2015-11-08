@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,26 +20,22 @@
 
 namespace Marando\AstroCoord;
 
+use \Marando\IAU\IAU;
 use \Marando\Units\Angle;
-use \Marando\Units\Time;
-use \Marando\AstroDate\Epoch;
-use \Marando\AstroDate\AstroDate;
 use \Marando\Units\Distance;
 use \Marando\Units\Velocity;
-use \Marando\IAU\IAU;
 
 /**
  * Represents a Cartesian XYZ position and velocity vector
  *
- * @property Frame    $frame Reference frame
- * @property Epoch    $epoch Observation epoch
  * @property Distance $x     x position
  * @property Distance $y     y position
  * @property Distance $z     z position
+ * @property Distance $r     Radial distance, r
  * @property Velocity $vx    x velocity
  * @property Velocity $vy    y velocity
  * @property Velocity $vz    z velocity
- * @property Distance $r     Radial distance, r
+ * @property Velocity $vr    Radial velocity, r
  */
 class Cartesian {
 
@@ -54,8 +50,6 @@ class Cartesian {
   /**
    * Creates a new Cartesian vector instance
    *
-   * @param Frame    $frame Reference frame
-   * @param Epoch    $epoch Observation epoch
    * @param Distance $x     x position
    * @param Distance $y     y position
    * @param Distance $z     z position
@@ -63,13 +57,8 @@ class Cartesian {
    * @param Velocity $vy    y velocity
    * @param Velocity $vz    z velocity
    */
-  public function __construct(Frame $frame, Epoch $epoch, Distance $x,
-          Distance $y, Distance $z, Velocity $vx = null, Velocity $vy = null,
-          Velocity $vz = null) {
-
-    // Set reference frame and observation epoch
-    $this->frame = $frame;
-    $this->epoch = $epoch;
+  public function __construct(Distance $x, Distance $y, Distance $z,
+          Velocity $vx = null, Velocity $vy = null, Velocity $vz = null) {
 
     // Set position components
     $this->x = $x;
@@ -88,18 +77,6 @@ class Cartesian {
   //----------------------------------------------------------------------------
   // Properties
   //----------------------------------------------------------------------------
-
-  /**
-   * Reference frame
-   * @var Frame
-   */
-  protected $frame;
-
-  /**
-   * Observation epoch
-   * @var Epoch
-   */
-  protected $epoch;
 
   /**
    * x position
@@ -139,8 +116,6 @@ class Cartesian {
 
   public function __get($name) {
     switch ($name) {
-      case 'frame':
-      case 'epoch':
       case 'x':
       case 'y':
       case 'z':
@@ -151,6 +126,9 @@ class Cartesian {
 
       case "r":
         return $this->calcR();
+
+      case "vr":
+        return $this->calcVR();
     }
   }
 
@@ -166,9 +144,11 @@ class Cartesian {
     $this->x->add($b->x);
     $this->y->add($b->y);
     $this->z->add($b->z);
-    $this->vx->add($b->vx);
-    $this->vy->add($b->vy);
-    $this->vz->add($b->vz);
+    if ($this->vx) {
+      $this->vx->add($b->vx);
+      $this->vy->add($b->vy);
+      $this->vz->add($b->vz);
+    }
 
     return $this;
   }
@@ -181,9 +161,11 @@ class Cartesian {
     $this->x->subtract($b->x);
     $this->y->subtract($b->y);
     $this->z->subtract($b->z);
-    $this->vx->subtract($b->vx);
-    $this->vy->subtract($b->vy);
-    $this->vz->subtract($b->vz);
+    if ($this->vx) {
+      $this->vx->subtract($b->vx);
+      $this->vy->subtract($b->vy);
+      $this->vz->subtract($b->vz);
+    }
 
     return $this;
   }
@@ -201,14 +183,14 @@ class Cartesian {
     $dec = Angle::rad($phi);
 
     // Return new equatorial instance using same frame and epoch
-    return new Equat($this->frame, $this->epoch, $ra, $dec, $this->r);
+    return new Equat($ra, $dec, $this->r);
   }
 
   // // // Protected
 
   /**
    * Calculates the radial distance, r of this instance
-   * @return float
+   * @return Distance
    */
   protected function calcR() {
     $x = $this->x->au;
@@ -216,6 +198,18 @@ class Cartesian {
     $z = $this->z->au;
 
     return Distance::au(sqrt($x * $x + $y * $y + $z * $z));
+  }
+
+  /**
+   * Calculates the radial velocity, vr of this instance
+   * @return Velocity
+   */
+  protected function calcVR() {
+    $x = $this->vx->aud;
+    $y = $this->vy->aud;
+    $z = $this->vz->aud;
+
+    return Velocity::aud(sqrt($x * $x + $y * $y + $z * $z));
   }
 
   // // // Overrides
@@ -232,54 +226,80 @@ class Cartesian {
     $x;
     $y;
     $z;
+    $r;
     $vx;
     $vy;
     $vz;
+    $vr;
 
     // Find units to use
     if ($this->unit == 'km km/d') {
       $du = 'km';
       $vu = 'km/d';
 
-      $x  = sprintf($format, $this->x->km);
-      $y  = sprintf($format, $this->y->km);
-      $z  = sprintf($format, $this->z->km);
-      $vx = sprintf($format, $this->vx->kmd);
-      $vy = sprintf($format, $this->vy->kmd);
-      $vz = sprintf($format, $this->vz->kmd);
+      $x = sprintf($format, $this->x->km);
+      $y = sprintf($format, $this->y->km);
+      $z = sprintf($format, $this->z->km);
+      $r = sprintf($format, $this->r->km);
+      if ($this->vx != null) {
+        $vx = sprintf($format, $this->vx->kmd);
+        $vy = sprintf($format, $this->vy->kmd);
+        $vz = sprintf($format, $this->vz->kmd);
+        $vr = sprintf($format, $this->vr->kmd);
+      }
     }
     else if ($this->unit == 'km km/s') {
       $du = 'km';
       $vu = 'km/s';
 
-      $x  = sprintf($format, $this->x->km);
-      $y  = sprintf($format, $this->y->km);
-      $z  = sprintf($format, $this->z->km);
-      $vx = sprintf($format, $this->vx->kms);
-      $vy = sprintf($format, $this->vy->kms);
-      $vz = sprintf($format, $this->vz->kms);
+      $x = sprintf($format, $this->x->km);
+      $y = sprintf($format, $this->y->km);
+      $z = sprintf($format, $this->z->km);
+      $r = sprintf($format, $this->r->km);
+      if ($this->vx != null) {
+        $vx = sprintf($format, $this->vx->kms);
+        $vy = sprintf($format, $this->vy->kms);
+        $vz = sprintf($format, $this->vz->kms);
+        $vr = sprintf($format, $this->vr->kms);
+      }
     }
     else {
       $du = 'au';
       $vu = 'au/d';
 
-      $x  = sprintf($format, $this->x->au);
-      $y  = sprintf($format, $this->y->au);
-      $z  = sprintf($format, $this->z->au);
-      $vx = sprintf($format, $this->vx->aud);
-      $vy = sprintf($format, $this->vy->aud);
-      $vz = sprintf($format, $this->vz->aud);
+      $x = sprintf($format, $this->x->au);
+      $y = sprintf($format, $this->y->au);
+      $z = sprintf($format, $this->z->au);
+      $r = sprintf($format, $this->r->au);
+      if ($this->vx != null) {
+        $vx = sprintf($format, $this->vx->aud);
+        $vy = sprintf($format, $this->vy->aud);
+        $vz = sprintf($format, $this->vz->aud);
+        $vr = sprintf($format, $this->vr->aud);
+      }
     }
 
     // Form the string
-    return <<<STRING
+    if ($this->vx != null) {
+      return <<<STRING
  X $x $du
  Y $y $du
  Z $z $du
+ R $r $du
 VX $vx $vu
 VY $vy $vu
 VZ $vz $vu
+VR $vr $vu
 STRING;
+    }
+    else {
+      return <<<STRING
+ X $x $du
+ Y $y $du
+ Z $z $du
+ R $r $du
+STRING;
+    }
   }
 
 }

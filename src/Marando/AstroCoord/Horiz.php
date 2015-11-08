@@ -21,33 +21,62 @@
 namespace Marando\AstroCoord;
 
 use \Marando\Units\Angle;
-
-// Can only be apparent
+use \Marando\Units\Distance;
 
 /**
- * @property Angle $alt Altitude
- * @property Angle $az  Azimuth
+ * @property Angle    $alt  Altitude
+ * @property Angle    $az   Azimuth
+ * @property Distance $dist Distace
  */
 class Horiz {
 
   protected $alt;
   protected $az;
+  protected $dist;
 
-  public function __construct(Angle $alt, Angle $az) {
-    $this->alt = $alt;
-    $this->az  = $az;
+  public function __construct(Angle $alt, Angle $az, Distance $dist = null) {
+    $this->alt  = $alt;
+    $this->az   = $az;
+    $this->dist = $dist;
   }
 
   public function __get($name) {
     switch ($name) {
       case 'alt':
       case 'az':
+      case 'dist':
         return $this->{$name};
     }
   }
 
   public function __toString() {
-    return "Alt $this->alt Az $this->az";
+    $deFormat = "%+03.0f";
+    $daFormat = "%+04.0f";
+    $mFormat  = "%02.0f";
+    $sFormat  = "%02.0f";
+
+    $eD = sprintf($deFormat, $this->alt->d);
+    $eM = sprintf($mFormat, abs($this->alt->m));
+    $eS = sprintf($sFormat, abs($this->alt->s));
+
+    $aD = sprintf($daFormat, abs($this->az->d));
+    $aM = sprintf($mFormat, abs($this->az->m));
+    $aS = sprintf($sFormat, abs($this->az->s));
+
+    $emic = str_replace('0.', '.',
+            round(abs(intval($this->alt->s) - $this->alt->s), 3));
+    $emic = str_pad($emic, 4, '0', STR_PAD_RIGHT);
+    $emic = round(abs(intval($this->alt->s) - $this->alt->s), 3) == 0 ?
+            '.000' : $emic;
+
+    $amic = str_replace('0.', '.',
+            round(abs(intval($this->az->s) - $this->az->s), 3));
+    $amic = str_pad($amic, 4, '0', STR_PAD_RIGHT);
+    $amic = round(abs(intval($this->az->s) - $this->az->s), 3) == 0 ?
+            '.000' : $amic;
+
+    $dist='';//$dist = $this->dist ? " Dist {$this->dist}" : '';
+    return "Alt {$eD}°{$eM}'{$eS}\"{$emic} Az {$aD}°{$aM}'{$aS}\"{$amic}{$dist}";
   }
 
 }

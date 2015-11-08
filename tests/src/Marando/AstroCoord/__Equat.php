@@ -31,6 +31,25 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $humidity = 0.7;
     $app      = $astrom->apparent($geo, $pressure, $temp, $humidity);
 
+
+
+    $app = new Equat($frame, $epoch, $ra, $dec, $dist);
+    
+    $app->apparent();
+
+    // Calls apparent
+    $app->topo($geo);
+
+    // Throws error if no topo set
+    $app->refract($t, $p, $rh);
+
+    // Trhows error if no topo set
+    $app->defract($t, $p, $rh);
+
+
+
+
+
     // TODO: Figure out why this inst exact
     $this->assertEquals(343.60341, $app->ra->toAngle()->deg, 'ra', 1);
     $this->assertEquals(-9.39349, $app->dec->deg, 'dec', 0.25);
@@ -50,6 +69,8 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     // TODO: Figure out why this inst exact
     $this->assertEquals(-23.4393, $horiz->alt->deg, 'alt', 1);
     $this->assertEquals(271.2178, $horiz->az->deg, 'az', 0.25);
+
+
   }
 
 }
