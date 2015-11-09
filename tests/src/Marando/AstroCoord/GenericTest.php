@@ -33,7 +33,7 @@ class GenericTest extends \PHPUnit_Framework_TestCase {
     echo "\n" . $eq->toHoriz();
     echo "\n" . $eq->apparent();
     echo "\n". $h = $eq->toHoriz();
-    //echo "\n" . $h->az->deg . "\t" . $h->alt->deg;
+    echo "\n" . $h->az->deg . "\t" . $h->alt->deg;
 
     echo "\n" . $eq->apparent(\Marando\Units\Pressure::mbar(100),
             \Marando\Units\Temperature::F(90), 0.85);

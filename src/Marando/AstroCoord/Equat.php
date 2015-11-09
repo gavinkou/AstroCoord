@@ -116,7 +116,11 @@ class Equat {
    */
   protected $obsrv;
 
-  protected $astrom;
+  /**
+   * Holds a copy of this instance before being converted to apparent
+   * @var static
+   */
+  protected $orig;
 
   public function __get($name) {
     switch ($name) {
@@ -184,73 +188,15 @@ class Equat {
   public function toHoriz(/* Geo $geo = null, */Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
+    // Return topographic observed horizontal coordinates
     return $this->IRCStoObserved('h', $pressure, $temp, $humidity);
-
-
-
-
-    $radec = $this->astrom ? $this->astrom : $this;
-
-    $geo = $this->obsrv ? $this->obsrv : $geo;
-
-    // Set up parameters requred by IAU apparent algorithm
-    $rc    = $radec->ra->toAngle()->rad;
-    $dc    = $radec->dec->rad;
-    $pr    = 0;
-    $pd    = 0;
-    $px    = $radec->dist->m > 0 ? $radec->dist->toParallax()->rad : 1e-13;
-    $rv    = 0;
-    $utc1  = $radec->epoch->toDate()->toUTC()->jd;
-    $utc2  = 0;
-    $dut1  = 0.155;
-    $elong = $geo ? $geo->lon->rad : 0;
-    $phi   = $geo ? $geo->lat->rad : 0;
-    $hm    = 0;
-    $xp    = 0;
-    $yp    = 0;
-    $phpa  = $pressure ? $pressure->mbar : 1000;
-    $tc    = $temp ? $temp->C : 15;
-    $rh    = $humidity ? $humidity : 0.7;
-    $wl    = 0.55;
-
-    // Run the conversion
-    IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
-            $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
-            $eo);
-
-
-    return new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
-
-
-    return;
-    // Copy the apparent coordinates of this instance, and get observation date
-    //$apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
-    $date = $this->epoch->toDate();
-
-    // Local apparant sidereal time and local hour angle
-    $last = $date->gast($geo ? $geo->lon : null);
-    $H    = $last->copy()->subtract($radec->ra)->toAngle()->rad;
-
-    // Get right ascension and declination as radians
-    $α = $radec->ra->toAngle()->rad;
-    $δ = $radec->dec->rad;
-
-    // Get geographic longitude as radians
-    $φ = $geo ? $geo->lat->rad : 0;
-    $ψ = $geo ? $geo->lon->rad : 0;
-
-    // Calculate alt/az
-    $az  = atan(sin($H) / (cos($H) * sin($φ) - tan($δ) * cos($φ)));
-    $alt = asin(sin($φ) * sin($δ) + cos($φ) * cos($δ) * cos($H));
-
-    // Return new horizontal coordinate instance
-    return new Horiz(Angle::rad($alt), Angle::rad($az)->norm());
   }
 
   // // // Protected
 
   /**
-   * Performs a [IRCS -> geocentric apparent] transformation for this instance
+   * Performs a [IRCS -> geocentric apparent] transformation for the parameters
+   * of this instance
    * @return static
    */
   protected function IRCStoApparentGeo() {
@@ -272,7 +218,7 @@ class Equat {
     // ICRS (astrometric) -> CIRS (geocentric observer)
     IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
 
-    // Apparent place
+    // Conversion to apparent place via equation of origins
     $ra = $ri - $eo;
     $da = $di;
 
@@ -286,11 +232,23 @@ class Equat {
     return $apparent;
   }
 
+  /**
+   * Performs a [IRCS -> topographic] coordinate transformation for the
+   * parameters of this instance
+   * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
+   * @return static|Horiz
+   */
   protected function IRCStoTopo($type = 'e') {
-    // Same as topo but iwth no weather
+    // Topo is Same as observed but with no weather
     return $this->IRCStoObserved($type);
   }
 
+  /**
+   * Performs a [IRCS -> observed] coordinate transformation for the parameters
+   * of this instance
+   * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
+   * @return static|Horiz
+   */
   protected function IRCStoObserved($type = 'e', Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
@@ -342,6 +300,7 @@ class Equat {
       return $topocentric;
     }
     else {
+      // Prepare new horizontal instance
       $horiz = new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
       return $horiz;
     }
@@ -374,13 +333,6 @@ class Equat {
     $frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
 
     return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
-
-
-
-    if ($this->apparent)
-      return "RA $this->ra Dec $this->dec ($this->epoch apparent)";
-    else
-      return "RA $this->ra Dec $this->dec ($this->frame)";
   }
 
 }
