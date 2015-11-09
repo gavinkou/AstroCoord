@@ -20,17 +20,16 @@
 
 namespace Marando\AstroCoord;
 
+use \Marando\AstroCoord\Geo;
 use \Marando\AstroCoord\Horiz;
+use \Marando\AstroDate\Epoch;
+use \Marando\IAU\IAU;
+use \Marando\IAU\iauASTROM;
+use \Marando\Units\Angle;
+use \Marando\Units\Distance;
 use \Marando\Units\Pressure;
 use \Marando\Units\Temperature;
-use \Marando\AstroDate\Epoch;
-use \Marando\AstroDate\AstroDate;
-use \Marando\Units\Distance;
-use \Marando\Units\Velocity;
-use \Marando\Units\Angle;
 use \Marando\Units\Time;
-use \Marando\IAU\IAU;
-use \Marando\AstroCoord\Geo;
 
 /**
  * Represents an equatorial coordinate
@@ -117,7 +116,11 @@ class Equat {
    */
   protected $obsrv;
 
-  protected $astrom;
+  /**
+   * Holds a copy of this instance before being converted to apparent
+   * @var static
+   */
+  protected $orig;
 
   public function __get($name) {
     switch ($name) {
@@ -143,58 +146,34 @@ class Equat {
   //----------------------------------------------------------------------------
 
   /**
-   * Returns the apparent coordinates of this instance for a given location
+   * Returns the apparent coordinates of this instance. Optionally weather
+   * parameters can be supplied to apply atmospheric refraction to the result.
    *
-   * @param  Geo         $geo      Geographic observation location
    * @param  Pressure    $pressure Atmospheric pressure
    * @param  Temperature $temp     Atmospheric temperature
    * @param  float       $humidity Relative humidity
    * @return static
    */
-  public function apparent(/*Geo $geo = null,*/ Pressure $pressure = null,
+  public function apparent(/* Geo $geo = null, */ Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
-    // Check if instance has aleady been converte to apparent
+    // Check if aleady converted to apparent, and return that if so
     if ($this->apparent)
       return $this->copy();
 
-    $this->astrom = $this->copy();
+    // If no topographic location set, return apparent geocentric
+    if ($this->obsrv == false || $this->obsrv == null)
+      return $this->IRCStoApparentGeo();
 
-    $geo = $this->obsrv ? $this->obsrv : $geo;
+    // If topographic location set, but no weather, return topographic apparent
+    if ($this->obsrv && !($pressure || $temp || $humidity))
+      return $this->IRCStoTopo();
 
-    // Set up parameters requred by IAU apparent algorithm
-    $rc    = $this->ra->toAngle()->rad;
-    $dc    = $this->dec->rad;
-    $pr    = 0;
-    $pd    = 0;
-    $px    = $this->dist->m > 0 ? $this->dist->toParallax()->rad : 1e-13;
-    $rv    = 0;
-    $utc1  = $this->epoch->toDate()->toUT1()->jd;
-    $utc2  = 0;
-    $dut1  = 0.155;
-    $elong = $geo ? $geo->lon->rad : 0;
-    $phi   = $geo ? $geo->lat->rad : 0;
-    $hm    = 0;
-    $xp    = 0;
-    $yp    = 0;
-    $phpa  = $pressure ? $pressure->mbar : 1000;
-    $tc    = $temp ? $temp->C : 15;
-    $rh    = $humidity ? $humidity : 0.7;
-    $wl    = 0.55;
+    // If topographic location set, and weather, return topographic observed
+    if ($this->obsrv && ($pressure || $temp || $humidity))
+      return $this->IRCStoObserved();
 
-    // Run the conversion
-    IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
-            $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
-            $eo);
-
-    // Copy this instance, and override the apparent RA and Decl
-    $apparent           = $this->copy();
-    $apparent->ra       = Angle::rad($rob)->toTime();
-    $apparent->dec      = Angle::rad($dob);
-    $apparent->apparent = true;
-
-    // Return apparent coordinates
-    return $apparent;
+    throw new Exception('An error has occured finding apparent coordinates');
   }
 
   /**
@@ -206,65 +185,125 @@ class Equat {
    * @param  float       $humidity Relative humidity
    * @return Horiz
    */
-  public function toHoriz(/*Geo $geo = null, */Pressure $pressure = null,
+  public function toHoriz(/* Geo $geo = null, */Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
-    $radec = $this->astrom ? $this->astrom : $this;
+    // Return topographic observed horizontal coordinates
+    return $this->IRCStoObserved('h', $pressure, $temp, $humidity);
+  }
 
-    $geo = $this->obsrv ? $this->obsrv : $geo;
+  // // // Protected
 
-    // Set up parameters requred by IAU apparent algorithm
-    $rc    = $radec->ra->toAngle()->rad;
-    $dc    = $radec->dec->rad;
+  /**
+   * Performs a [IRCS -> geocentric apparent] transformation for the parameters
+   * of this instance
+   * @return static
+   */
+  protected function IRCStoApparentGeo() {
+    // Instance initial properties
+    $rc    = $this->ra->toAngle()->rad;
+    $dc    = $this->dec->rad;
+    $date1 = $this->epoch->jd;
     $pr    = 0;
     $pd    = 0;
-    $px    = $radec->dist->m > 0 ? $radec->dist->toParallax()->rad : 1e-13;
     $rv    = 0;
-    $utc1  = $radec->epoch->toDate()->toUT1()->jd;
-    $utc2  = 0;
-    $dut1  = 0.155;
-    $elong = $geo ? $geo->lon->rad : 0;
-    $phi   = $geo ? $geo->lat->rad : 0;
-    $hm    = 0;
+    $px    = 0;
+
+    // ICRS -> CIRS (geocentric observer)
+    IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
+
+    // CIRS -> ICRS (astrometric)
+    IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
+
+    // ICRS (astrometric) -> CIRS (geocentric observer)
+    IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
+
+    // Conversion to apparent place via equation of origins
+    $ra = $ri - $eo;
+    $da = $di;
+
+    // Copy this instance, and override the apparent RA and Decl
+    $apparent           = $this->copy();
+    $apparent->ra       = Angle::rad($ra)->toTime();
+    $apparent->dec      = Angle::rad($da);
+    $apparent->apparent = true;
+
+    // Return apparent coordinates
+    return $apparent;
+  }
+
+  /**
+   * Performs a [IRCS -> topographic] coordinate transformation for the
+   * parameters of this instance
+   * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
+   * @return static|Horiz
+   */
+  protected function IRCStoTopo($type = 'e') {
+    // Topo is Same as observed but with no weather
+    return $this->IRCStoObserved($type);
+  }
+
+  /**
+   * Performs a [IRCS -> observed] coordinate transformation for the parameters
+   * of this instance
+   * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
+   * @return static|Horiz
+   */
+  protected function IRCStoObserved($type = 'e', Pressure $pressure = null,
+          Temperature $temp = null, $humidity = null) {
+
+    // Instance initial properties
+    $rc    = $this->ra->toAngle()->rad;
+    $dc    = $this->dec->rad;
+    $date1 = $this->epoch->jd;
+    $pr    = 0;
+    $pd    = 0;
+    $rv    = 0;
+    $px    = 0;
+    $utc1  = $this->epoch->toDate()->toUTC()->jd;
+    $dut1  = .155;
+    $elong = $this->obsrv ? $this->obsrv->lon->rad : 0;
+    $phi   = $this->obsrv ? $this->obsrv->lat->rad : 0;
+    $hm    = 0; //$this->obsrv->height->m;
     $xp    = 0;
     $yp    = 0;
-    $phpa  = $pressure ? $pressure->mbar : 1000;
-    $tc    = $temp ? $temp->C : 15;
-    $rh    = $humidity ? $humidity : 0.7;
+    $phpa  = $pressure ? $pressure->mbar : 0;
+    $tc    = $temp ? $temp->c : 0;
+    $rh    = $humidity ? $humidity : 0;
     $wl    = 0.55;
 
-    // Run the conversion
-    IAU::Atco13($rc, $dc, $pr, $pd, $px, $rv, $utc1, $utc2, $dut1, $elong, $phi,
-            $hm, $xp, $yp, $phpa, $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob,
-            $eo);
+    // ICRS -> CIRS (geocentric observer)
+    IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
 
+    // CIRS -> ICRS (astrometric)
+    IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
 
-    return new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
+    // ICRS (astrometric) -> CIRS (geocentric observer)
+    IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
 
+    // Apparent place ?
+    //$ri = $ri - $eo;
+    //$di = $di;
+    //
+    // CIRS -> topocentric
+    IAU::Atio13($ri, $di, $utc1, 0, $dut1, $elong, $phi, $hm, $xp, $yp, $phpa,
+            $tc, $rh, $wl, $aob, $zob, $hob, $dob, $rob);
 
-    return;
-    // Copy the apparent coordinates of this instance, and get observation date
-    //$apparent = $this->copy()->apparent($geo, $pressure, $temp, $humidity);
-    $date = $this->epoch->toDate();
+    if ($type == 'e') {
+      // Copy this instance, and override the apparent RA and Decl
+      $topocentric           = $this->copy();
+      $topocentric->ra       = Angle::rad($rob)->toTime();
+      $topocentric->dec      = Angle::rad($dob);
+      $topocentric->apparent = true;
 
-    // Local apparant sidereal time and local hour angle
-    $last = $date->gast($geo ? $geo->lon : null);
-    $H    = $last->copy()->subtract($radec->ra)->toAngle()->rad;
-
-    // Get right ascension and declination as radians
-    $α = $radec->ra->toAngle()->rad;
-    $δ = $radec->dec->rad;
-
-    // Get geographic longitude as radians
-    $φ = $geo ? $geo->lat->rad : 0;
-    $ψ = $geo ? $geo->lon->rad : 0;
-
-    // Calculate alt/az
-    $az  = atan(sin($H) / (cos($H) * sin($φ) - tan($δ) * cos($φ)));
-    $alt = asin(sin($φ) * sin($δ) + cos($φ) * cos($δ) * cos($H));
-
-    // Return new horizontal coordinate instance
-    return new Horiz(Angle::rad($alt), Angle::rad($az)->norm());
+      // Return apparent coordinates
+      return $topocentric;
+    }
+    else {
+      // Prepare new horizontal instance
+      $horiz = new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
+      return $horiz;
+    }
   }
 
   // // // Overrides
@@ -281,7 +320,7 @@ class Equat {
     $rD       = sprintf($drFormat, $this->ra->h);
     $rM       = sprintf($mFormat, abs($this->ra->m));
     $rS       = sprintf($sFormat, abs($this->ra->s));
-    $dD       = sprintf($ddFormat, abs($this->dec->d));
+    $dD       = sprintf($ddFormat, $this->dec->d);
     $dM       = sprintf($mFormat, abs($this->dec->m));
     $dS       = sprintf($sFormat, abs($this->dec->s));
     $rmic     = str_replace('0.', '', round(abs($this->ra->micro), 3));
@@ -294,13 +333,6 @@ class Equat {
     $frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
 
     return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
-
-
-
-    if ($this->apparent)
-      return "RA $this->ra Dec $this->dec ($this->epoch apparent)";
-    else
-      return "RA $this->ra Dec $this->dec ($this->frame)";
   }
 
 }
