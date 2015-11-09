@@ -17,21 +17,47 @@ class GenericTest extends \PHPUnit_Framework_TestCase {
 
   public function test() {
 
+    $frame = Frame::ICRF();
+    $epoch = AstroDate::jd(2457335.472615741)->toEpoch();
+
+    $ra   = \Marando\Units\Time::hms(11, 16, 46.60);
+    $dec  = \Marando\Units\Angle::dms(5, 45, 32.5);
+    $dist = Distance::au(5.8);
+
+    echo "\n" . $eq = new Equat($frame, $epoch, $ra, $dec, $dist);
+    echo "\n" . $eq = (new Equat($frame, $epoch, $ra, $dec, $dist))->apparent();
+
+    $eq        = new Equat($frame, $epoch, $ra, $dec, $dist);
+    $eq->obsrv = Geo::deg(27, -82);
+
+    echo "\n" . $eq->toHoriz();
+    echo "\n" . $eq->apparent();
+    echo "\n". $h = $eq->toHoriz();
+    //echo "\n" . $h->az->deg . "\t" . $h->alt->deg;
+
+    echo "\n" . $eq->apparent(\Marando\Units\Pressure::mbar(100),
+            \Marando\Units\Temperature::F(90), 0.85);
+
+    echo "\n" . $eq->toHoriz();
+
+
+    return;
+
     $ra   = \Marando\Units\Time::hours(14.424354);
     $dec  = \Marando\Units\Angle::deg(33.54366);
     $dist = Distance::au(1.5);
     $geo  = Geo::deg(27, -82);
 
 
-    $e = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
+    $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
     $e->obsrv = $geo;
     echo "\n\n" . $e;
     echo "\n" . $e->apparent();
-    $e = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
+    $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
     $e->obsrv = $geo;
     echo "\n" . $e->apparent();
 
-    $e = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
+    $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
     $e->obsrv = $geo;
     echo "\n" . $e->toHoriz();
 

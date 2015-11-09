@@ -19,6 +19,27 @@ class EquatTest extends PHPUnit_Framework_TestCase {
    * @covers Marando\AstroCoord\Equat::apparent
    */
   public function testApparent() {
+
+    /**
+     * Geocentric Apparent Place. Test values from JPL Horizons system, position
+     * of Jupiter on JD 2457335.472615741 TT
+     */
+    $frame  = Frame::ICRF();
+    $epoch  = AstroDate::jd(2457335.472615741)->toEpoch();
+    $ra     = Time::hms(11, 16, 46.60);
+    $dec    = Angle::dms(5, 45, 32.5);
+    $dist   = Distance::au(5.8);
+    $aGeo   = (new Equat($frame, $epoch, $ra, $dec, $dist))->apparent();
+    $expRA  = Time::hms(11, 17, 34.89);
+    $expDec = Angle::dms(5, 40, 23.3);
+    $this->assertEquals($expRA, $aGeo->ra, 'geocentric apparent, ra', 1e-3);
+    $this->assertEquals($expDec, $aGeo->dec, 'geocentric apparent, dec', 1e-3);
+
+
+    return;
+
+
+    //
     $epoch = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
     $ra    = Time::hms(22, 51, 15.99);
     $dec   = Angle::dms(-9, 45, 03.3);
