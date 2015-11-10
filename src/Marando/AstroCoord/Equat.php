@@ -360,7 +360,9 @@ class Equat {
     $dmic     = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
     $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
 
-    $frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
+    //$frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
+    $mjd = round($this->epoch->toDate()->jd - 2450000.5, 3);
+    $frame = $this->apparent ? "MJD {$mjd}" : "$this->frame.0";
 
     return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
   }
