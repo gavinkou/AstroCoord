@@ -36,9 +36,10 @@ use \Marando\Units\Time;
  *
  * @param Frame $frame Reference frame
  * @param Epoch $epoch Observation epoch
+ * @param Geo   $obsrv Geographic observation location
  * @param Time  $ra    Right ascension
  * @param Angle $dec   Declination
- * @param Geo   $obsrv Geographic observation location
+ * @param Angle $dist  Observer to target distance
  */
 class Equat {
 
@@ -58,7 +59,7 @@ class Equat {
    * @param Distance $dist  Distance
    */
   public function __construct(Frame $frame, Epoch $epoch, Time $ra, Angle $dec,
-          Distance $dist) {
+          Distance $dist = null) {
 
     // Set reference frame and observation epoch
     $this->frame = $frame;
@@ -161,6 +162,9 @@ class Equat {
     if ($this->apparent)
       return $this->copy();
 
+    // Save original coordinates
+    $this->orig = $this->copy();
+
     // If no topographic location set, return apparent geocentric
     if ($this->obsrv == false || $this->obsrv == null)
       return $this->IRCStoApparentGeo();
@@ -192,7 +196,33 @@ class Equat {
     return $this->IRCStoObserved('h', $pressure, $temp, $humidity);
   }
 
+  public function toEclip(Angle $obli = null) {
+    $α = $this->ra->toAngle()->rad;
+    $δ = $this->dec->rad;
+    $ε = $obli ? $obli->rad : $this->obli()->rad;
+
+    $λ = atan2((sin($α) * cos($ε) + tan($δ) * sin($ε)), cos($α));
+    $β = asin(sin($δ) * cos($ε) - cos($δ) * sin($ε) * sin($α));
+
+    return new Eclip(Angle::rad($λ), Angle::rad($β), $this->dist);
+  }
+
   // // // Protected
+
+  protected function obli() {
+    $jdTT = $this->epoch->toDate()->copy()->toTT()->jd;
+    $ε0   = Angle::rad(IAU::Obl06($jdTT, 0));
+
+    if ($this->apparent) {
+      // True obliquity
+      IAU::Nut06a($jdTT, 0, $Δψ, $Δε);
+      return $ε0->add(Angle::rad($Δε));
+    }
+    else {
+      // Mean obliquity
+      return $ε0;
+    }
+  }
 
   /**
    * Performs a [IRCS -> geocentric apparent] transformation for the parameters
