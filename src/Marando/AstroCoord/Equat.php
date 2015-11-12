@@ -197,14 +197,17 @@ class Equat {
   }
 
   public function toEclip(Angle $obli = null) {
-    $α = $this->ra->toAngle()->rad;
-    $δ = $this->dec->rad;
-    $ε = $obli ? $obli->rad : $this->obli()->rad;
+    $radec = $this->orig ? $this->orig->copy() : $this;
+    $radec->obsrv = null;
+
+    $α = $radec->ra->toAngle()->rad;
+    $δ = $radec->dec->rad;
+    $ε = $obli ? $obli->rad : $radec->obli()->rad;
 
     $λ = atan2((sin($α) * cos($ε) + tan($δ) * sin($ε)), cos($α));
     $β = asin(sin($δ) * cos($ε) - cos($δ) * sin($ε) * sin($α));
 
-    return new Eclip(Angle::rad($λ), Angle::rad($β), $this->dist);
+    return new Eclip(Angle::rad($λ)->norm(), Angle::rad($β), $this->dist);
   }
 
   // // // Protected
@@ -233,11 +236,11 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->jd;
+    $date1 = $this->epoch->toDate()->toTDB()->jd;
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
-    $px    = 0;
+    $px    = $this->dist ? (8.794 / 3600) / $this->dist->au : 0;
 
     // ICRS -> CIRS (geocentric observer)
     IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
@@ -285,11 +288,11 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->jd;
+    $date1 = $this->epoch->toDate()->toTDB()->jd;
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
-    $px    = 0;
+    $px    = $this->dist->au > 0 ? (8.794 / 3600) / $this->dist->au : 0;
     $utc1  = $this->epoch->toDate()->toUTC()->jd;
     $dut1  = .155;
     $elong = $this->obsrv ? $this->obsrv->lon->rad : 0;
@@ -359,10 +362,9 @@ class Equat {
             round(abs(intval($this->dec->s) - $this->dec->s), 3));
     $dmic     = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
     $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
-
     //$frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
-    $mjd = round($this->epoch->toDate()->jd - 2450000.5, 3);
-    $frame = $this->apparent ? "MJD {$mjd}" : "$this->frame.0";
+    $mjd      = round($this->epoch->toDate()->jd - 2450000.5, 3);
+    $frame    = $this->apparent ? "MJD {$mjd}" : "$this->frame.0";
 
     return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
   }

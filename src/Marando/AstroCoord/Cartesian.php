@@ -241,45 +241,60 @@ class Cartesian {
       $du = 'km';
       $vu = 'km/d';
 
-      $x  = sprintf($format, $this->x->km);
-      $y  = sprintf($format, $this->y->km);
-      $z  = sprintf($format, $this->z->km);
-      $vx = sprintf($format, $this->vx->kmd);
-      $vy = sprintf($format, $this->vy->kmd);
-      $vz = sprintf($format, $this->vz->kmd);
+      $x = sprintf($format, $this->x->km);
+      $y = sprintf($format, $this->y->km);
+      $z = sprintf($format, $this->z->km);
+      if ($this->vx) {
+        $vx = sprintf($format, $this->vx->kmd);
+        $vy = sprintf($format, $this->vy->kmd);
+        $vz = sprintf($format, $this->vz->kmd);
+      }
     }
     else if ($this->unit == 'km km/s') {
       $du = 'km';
       $vu = 'km/s';
 
-      $x  = sprintf($format, $this->x->km);
-      $y  = sprintf($format, $this->y->km);
-      $z  = sprintf($format, $this->z->km);
-      $vx = sprintf($format, $this->vx->kms);
-      $vy = sprintf($format, $this->vy->kms);
-      $vz = sprintf($format, $this->vz->kms);
+      $x = sprintf($format, $this->x->km);
+      $y = sprintf($format, $this->y->km);
+      $z = sprintf($format, $this->z->km);
+      if ($this->vx) {
+        $vx = sprintf($format, $this->vx->kms);
+        $vy = sprintf($format, $this->vy->kms);
+        $vz = sprintf($format, $this->vz->kms);
+      }
     }
     else {
       $du = 'au';
       $vu = 'au/d';
 
-      $x  = sprintf($format, $this->x->au);
-      $y  = sprintf($format, $this->y->au);
-      $z  = sprintf($format, $this->z->au);
-      $vx = sprintf($format, $this->vx->aud);
-      $vy = sprintf($format, $this->vy->aud);
-      $vz = sprintf($format, $this->vz->aud);
+      $x = sprintf($format, $this->x->au);
+      $y = sprintf($format, $this->y->au);
+      $z = sprintf($format, $this->z->au);
+      if ($this->vx) {
+        $vx = sprintf($format, $this->vx->aud);
+        $vy = sprintf($format, $this->vy->aud);
+        $vz = sprintf($format, $this->vz->aud);
+      }
     }
 
     // Form the string
-    return <<<STRING
+    $p = <<<STRING
  X $x $du
  Y $y $du
  Z $z $du
+STRING;
+
+    if ($this->vx) {
+      $v = <<<STRING
 VX $vx $vu
 VY $vy $vu
 VZ $vz $vu
 STRING;
+      return $p . $v;
+    }
+    else {
+      return $p;
+    }
   }
 
 }
