@@ -4,7 +4,8 @@
   "require": {
     "marando/units": "^0.3.2",
     "marando/astrodate": "^0.3.2",
-    "marando/php-sofa": "^0.2.0"
+    "marando/php-sofa": "^0.2.0",
+    "marando/php-iers": "^0.1.2"
   },
   "require-dev": {
     "phpunit/phpunit": "^5.0"

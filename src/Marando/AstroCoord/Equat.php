@@ -20,11 +20,13 @@
 
 namespace Marando\AstroCoord;
 
+use \Exception;
 use \Marando\AstroCoord\Geo;
 use \Marando\AstroCoord\Horiz;
 use \Marando\AstroDate\Epoch;
 use \Marando\IAU\IAU;
 use \Marando\IAU\iauASTROM;
+use \Marando\IERS\IERS;
 use \Marando\Units\Angle;
 use \Marando\Units\Distance;
 use \Marando\Units\Pressure;
@@ -197,7 +199,7 @@ class Equat {
   }
 
   public function toEclip(Angle $obli = null) {
-    $radec = $this->orig ? $this->orig->copy() : $this;
+    $radec        = $this->orig ? $this->orig->copy() : $this;
     $radec->obsrv = null;
 
     $α = $radec->ra->toAngle()->rad;
@@ -294,12 +296,12 @@ class Equat {
     $rv    = 0;
     $px    = $this->dist->au > 0 ? (8.794 / 3600) / $this->dist->au : 0;
     $utc1  = $this->epoch->toDate()->toUTC()->jd;
-    $dut1  = .155;
+    $dut1  = IERS::jd($utc1)->dut1();
     $elong = $this->obsrv ? $this->obsrv->lon->rad : 0;
     $phi   = $this->obsrv ? $this->obsrv->lat->rad : 0;
     $hm    = 0; //$this->obsrv->height->m;
-    $xp    = 0;
-    $yp    = 0;
+    $xp    = IERS::jd($utc1)->x() / 3600 * pi() / 180;
+    $yp    = IERS::jd($utc1)->y() / 3600 * pi() / 180;
     $phpa  = $pressure ? $pressure->mbar : 0;
     $tc    = $temp ? $temp->c : 0;
     $rh    = $humidity ? $humidity : 0;
