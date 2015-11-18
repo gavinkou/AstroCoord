@@ -435,6 +435,7 @@ class Equat {
     // Distance and frame
     $r = $this->dist->copy()->setUnit('AU');
     $d = $r->au < Distance::pc(1)->au ? $r : $r->setUnit('pc');
+    $d = $r->au < 1 ? $r->setUnit('km') : $r;
     $f = $this->apparent ? $this->epoch : "$this->frame";
 
     // Format string
