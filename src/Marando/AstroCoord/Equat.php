@@ -215,7 +215,7 @@ class Equat {
   // // // Protected
 
   protected function obli() {
-    $jdTT = $this->epoch->toDate()->copy()->toTT()->jd;
+    $jdTT = $this->epoch->toDate()->copy()->toTT()->toJD();
     $ε0   = Angle::rad(IAU::Obl06($jdTT, 0));
 
     if ($this->apparent) {
@@ -238,7 +238,7 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->toDate()->toTDB()->jd;
+    $date1 = $this->epoch->toDate()->toTDB()->toJD();
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
@@ -290,12 +290,12 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->toDate()->toTDB()->jd;
+    $date1 = $this->epoch->toDate()->toTDB()->toJD();
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
     $px    = $this->dist->au > 0 ? (8.794 / 3600) / $this->dist->au : 0;
-    $utc1  = $this->epoch->toDate()->toUTC()->jd;
+    $utc1  = $this->epoch->toDate()->toUTC()->toJD();
     $dut1  = IERS::jd($utc1)->dut1();
     $elong = $this->obsrv ? $this->obsrv->lon->rad : 0;
     $phi   = $this->obsrv ? $this->obsrv->lat->rad : 0;
@@ -365,8 +365,9 @@ class Equat {
     $dmic     = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
     $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
     //$frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
-    $mjd      = round($this->epoch->toDate()->jd - 2450000.5, 3);
-    $frame    = $this->apparent ? "MJD {$mjd}" : "$this->frame.0";
+    //$mjd      = round($this->epoch->toDate()->toJD() - 2450000.5, 3);
+    //$frame    = $this->apparent ? "MJD {$mjd}" : "$this->frame.0";
+    $frame    = $this->apparent ? $this->epoch : "$this->frame";
 
     return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
   }
