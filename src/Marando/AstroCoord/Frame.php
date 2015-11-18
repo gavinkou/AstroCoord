@@ -29,13 +29,18 @@ use \Marando\AstroDate\Epoch;
  * @property Epoch  $equinox Equniox of the reference frame
  */
 class Frame {
-
   //----------------------------------------------------------------------------
   // Constructors
   //----------------------------------------------------------------------------
 
-  protected function __construct($frame, Epoch $equinox = null) {
-    $this->frame   = $frame;
+  /**
+   * Creates a new Frame instance
+   *
+   * @param string $name    Name of the frame
+   * @param Epoch  $equinox Epoch of the frame's equinox (if relevant)
+   */
+  protected function __construct($name, Epoch $equinox = null) {
+    $this->name    = $name;
     $this->equinox = $equinox;
   }
 
@@ -77,13 +82,21 @@ class Frame {
    * Name of the reference frame
    * @var string
    */
-  protected $frame;
+  protected $name;
 
   /**
    * Equniox of the reference frame
    * @var Epoch
    */
   protected $equinox;
+
+  public function __get($name) {
+    switch ($name) {
+      case 'name':
+      case 'equinox':
+        return $this->{$name};
+    }
+  }
 
   //----------------------------------------------------------------------------
   // Functions
@@ -94,7 +107,7 @@ class Frame {
    * @return string
    */
   public function __toString() {
-    return "$this->frame/$this->equinox";
+    return "{$this->name}/{$this->equinox}";
   }
 
 }

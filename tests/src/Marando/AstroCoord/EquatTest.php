@@ -28,8 +28,16 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $c  = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
 
 
-    echo "\n".$c->toEquat();
-    echo "\n".$apparent = $c->toEquat()->apparent();
+    echo "\n" . $c;
+    echo "\n" . $c->toEquat()->toEclip();
+    echo "\n" . $c->toEquat()->toHoriz();
+    echo "\n" . $d        = $c->toEquat();
+    echo "\n" . $apparent = $c->toEquat()->apparent();
+
+    $d->dec   = Angle::deg(30);
+    $d->dist   =  Distance::ly(400.453);
+    echo "\n" . $d;
+
 
     $prec = Angle::arcsec(3)->deg;
     $this->assertEquals(180.78098, $apparent->ra->toAngle()->deg, 'ra', $prec);
@@ -47,7 +55,7 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $z            = Distance::au(1.392567642390632E-02);
     $c            = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
     $equat        = $c->toEquat();
-    $equat->obsrv = Geo::deg(27.9494000, -82.4569);
+    $equat->topo = Geo::deg(27.9494000, -82.4569);
 
 
     $apparent = $equat->apparent();
@@ -65,7 +73,7 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $ra          = Angle::deg(180.58211)->toTime();
     $dec         = Angle::deg(1.00232);
     $astr        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
-    $astr->obsrv = Geo::deg(27.9494000, -82.4569);
+    $astr->topo = Geo::deg(27.9494000, -82.4569);
 
 
     $horiz = $astr->toHoriz();

@@ -40,7 +40,7 @@ class Geo {
    * @param Angle $lon Longitude, West negative
    */
   public function __construct(Angle $lat, Angle $lon) {
-    $this->lat = $lat->norm(0, 90);
+    $this->lat = $lat->norm(-180, 180);
     $this->lon = $lon->norm(-90, 90);
   }
 
