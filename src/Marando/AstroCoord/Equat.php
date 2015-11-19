@@ -51,9 +51,10 @@ class Equat {
   // Constatns
   //----------------------------------------------------------------------------
 
-  const FORMAT_DEFAULT = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {DAU%02.3f} ({FY M. c T})';
-  const FORMAT_SPACED  = 'α {Rh%02d} {Rm%02d} {Rs%02d}.{Ru%.3f}, δ {Dd%+03d} {Dm%02d} {Ds%02d}.{Du%.2f} {DAU%02.3f} ({FY M. c T})';
-  const FORMAT_DEGREES  = 'α {RD%02.4f}°, δ {DD%+02.4f}° {DAU%02.3f} ({FY M. c T})';
+  const FORMAT_DEFAULT    = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {D%02.3f} ({FY M. c T})';
+  const FORMAT_DEFAULT_NF = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {D%02.3f}';
+  const FORMAT_SPACED     = 'α {Rh%02d} {Rm%02d} {Rs%02d}.{Ru%.3f}, δ {Dd%+03d} {Dm%02d} {Ds%02d}.{Du%.2f} {D%02.3f} ({FY M. c T})';
+  const FORMAT_DEGREES    = 'α {RD%02.4f}°, δ {DD%+02.4f}° {D%02.3f} ({FY M. c T})';
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -471,17 +472,17 @@ class Equat {
     }
 
     if (preg_match('/{Rm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αm     = sprintf($m[1], $this->ra->m);
+      $αm     = sprintf(abs($m[1]), $this->ra->m);
       $format = str_replace($m[0], $αm, $format);
     }
 
     if (preg_match('/{Rs(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αs     = sprintf($m[1], $this->ra->s);
+      $αs     = sprintf(abs($m[1]), $this->ra->s);
       $format = str_replace($m[0], $αs, $format);
     }
 
     if (preg_match('/{Ru(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αu     = sprintf($m[1], $this->ra->micro);
+      $αu     = sprintf(abs($m[1]), $this->ra->micro);
       $format = str_replace($m[0], str_replace('0.', '', $αu), $format);
     }
 
@@ -498,15 +499,15 @@ class Equat {
       $format = str_replace($m[0], $δd, $format);
     }
     if (preg_match('/{Dm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δm     = sprintf($m[1], $this->dec->m);
+      $δm     = sprintf(abs($m[1]), $this->dec->m);
       $format = str_replace($m[0], $δm, $format);
     }
     if (preg_match('/{Ds(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δs     = sprintf($m[1], $this->dec->s);
+      $δs     = sprintf(abs($m[1]), $this->dec->s);
       $format = str_replace($m[0], $δs, $format);
     }
     if (preg_match('/{Du(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $μ      = $this->dec->s - intval($this->dec->s);
+      $μ      = abs($this->dec->s - intval($this->dec->s));
       $δμ     = sprintf($m[1], $μ);
       $format = str_replace($m[0], str_replace('0.', '', $δμ), $format);
     }
