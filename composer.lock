@@ -9,16 +9,16 @@
     "packages": [
         {
             "name": "marando/astrodate",
-            "version": "1.0",
+            "version": "1.0.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/AstroDate.git",
-                "reference": "ca952fed32c05c56518dbf93744da325690e303e"
+                "reference": "6d889955259cce670ae00e982ca63da124529d3a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/AstroDate/zipball/ca952fed32c05c56518dbf93744da325690e303e",
-                "reference": "ca952fed32c05c56518dbf93744da325690e303e",
+                "url": "https://api.github.com/repos/marando/AstroDate/zipball/6d889955259cce670ae00e982ca63da124529d3a",
+                "reference": "6d889955259cce670ae00e982ca63da124529d3a",
                 "shasum": ""
             },
             "require": {
@@ -47,7 +47,7 @@
                 }
             ],
             "description": "A PHP Date/Time class with useful astronomy related functionality",
-            "time": "2015-11-18 06:46:14"
+            "time": "2015-11-19 02:49:32"
         },
         {
             "name": "marando/php-iers",

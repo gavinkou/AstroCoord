@@ -105,7 +105,7 @@ class CartesianTest extends PHPUnit_Framework_TestCase {
    */
   public function testToEquat() {
     $frame = Frame::ICRF();
-    $epoch = AstroDate::parse('2015-Mar-20 00:00:00')->toEpoch();
+    $epoch = AstroDate::parse('2015-Mar-20')->toEpoch();
 
     // Position
     $x   = Distance::pc(-0.472);

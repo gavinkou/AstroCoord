@@ -48,6 +48,14 @@ class Equat {
   use Traits\CopyTrait;
 
   //----------------------------------------------------------------------------
+  // Constatns
+  //----------------------------------------------------------------------------
+
+  const FORMAT_DEFAULT = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {DAU%02.3f} ({FY M. c T})';
+  const FORMAT_SPACED  = 'α {Rh%02d} {Rm%02d} {Rs%02d}.{Ru%.3f}, δ {Dd%+03d} {Dm%02d} {Ds%02d}.{Du%.2f} {DAU%02.3f} ({FY M. c T})';
+  const FORMAT_DEGREES  = 'α {RD%02.4f}°, δ {DD%+02.4f}° {DAU%02.3f} ({FY M. c T})';
+
+  //----------------------------------------------------------------------------
   // Constructors
   //----------------------------------------------------------------------------
 
@@ -71,6 +79,8 @@ class Equat {
     $this->ra   = $ra->setUnit('hms');
     $this->dec  = $dec;
     $this->dist = $dist;
+
+    $this->format = static::FORMAT_DEFAULT;
   }
 
   //----------------------------------------------------------------------------
@@ -124,6 +134,7 @@ class Equat {
    * @var static
    */
   protected $orig;
+  protected $format;
 
   public function __get($name) {
     switch ($name) {
@@ -306,7 +317,7 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->toDate()->toTDB()->toJD();
+    $date1 = $this->epoch->toDate()->copy()->toTDB()->toJD();
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
@@ -418,6 +429,8 @@ class Equat {
    * @return string
    */
   public function __toString() {
+    return $this->format($this->format);
+
     // Right Ascension
     $αd = sprintf('%02d', abs($this->ra->h));
     $αm = sprintf('%02d', abs($this->ra->m));
@@ -442,6 +455,83 @@ class Equat {
     $α = "{$αd}ʰ{$αm}ᵐ{$αs}ˢ.{$αμ}";
     $δ = "{$δd}°{$δm}'{$δs}\".{$δμ}";
     return "α {$α}, δ {$δ}, {$d} ({$f})";
+  }
+
+  public function format($format) {
+    $this->format = $format;
+
+    if (preg_match('/{RD(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $αD     = sprintf($m[1], $this->ra->toAngle()->deg);
+      $format = str_replace($m[0], $αD, $format);
+    }
+
+    if (preg_match('/{Rh(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $αh     = sprintf($m[1], $this->ra->h);
+      $format = str_replace($m[0], $αh, $format);
+    }
+
+    if (preg_match('/{Rm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $αm     = sprintf($m[1], $this->ra->m);
+      $format = str_replace($m[0], $αm, $format);
+    }
+
+    if (preg_match('/{Rs(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $αs     = sprintf($m[1], $this->ra->s);
+      $format = str_replace($m[0], $αs, $format);
+    }
+
+    if (preg_match('/{Ru(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $αu     = sprintf($m[1], $this->ra->micro);
+      $format = str_replace($m[0], str_replace('0.', '', $αu), $format);
+    }
+
+
+    // // //
+
+    if (preg_match('/{DD(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $δD     = sprintf($m[1], $this->dec->deg);
+      $format = str_replace($m[0], $δD, $format);
+    }
+
+    if (preg_match('/{Dd(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $δd     = sprintf($m[1], $this->dec->d);
+      $format = str_replace($m[0], $δd, $format);
+    }
+    if (preg_match('/{Dm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $δm     = sprintf($m[1], $this->dec->m);
+      $format = str_replace($m[0], $δm, $format);
+    }
+    if (preg_match('/{Ds(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $δs     = sprintf($m[1], $this->dec->s);
+      $format = str_replace($m[0], $δs, $format);
+    }
+    if (preg_match('/{Du(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
+      $μ      = $this->dec->s - intval($this->dec->s);
+      $δμ     = sprintf($m[1], $μ);
+      $format = str_replace($m[0], str_replace('0.', '', $δμ), $format);
+    }
+    // // //
+
+    if (preg_match('/{D(AU|au|KM|km|PC|pc)*(%.[0-9]{0,1}\.{0,1}[0-9]{0,3}[a-zA-Z])}/',
+                    $format, $m)) {
+      $r = $this->dist->copy()->setUnit('AU');
+      $d = $r->au < Distance::pc(1)->au ? $r : $r->setUnit('pc');
+      $d = $r->au < 1 ? $r->setUnit('km') : $r;
+
+      if ($m[1])
+        $d = sprintf($m[2], $this->dist->{strtolower($m[1])}) . ' ' . $m[1];
+
+      $format = str_replace($m[0], $d, $format);
+    }
+
+    if (preg_match('/{F([a-zA-Z-\s\.]*)}/', $format, $m)) {
+      $F      = $this->frame->name;
+      $Fd     = $this->apparent ? $this->epoch->toDate()->format($m[1]) : $this->frame->equinox;
+      $F      = $this->apparent ? "$Fd" : "$F/$Fd";
+      $format = str_replace($m[0], "$F", $format);
+    }
+
+    return $format;
   }
 
 }
