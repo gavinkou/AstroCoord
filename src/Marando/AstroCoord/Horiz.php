@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,22 +21,89 @@
 namespace Marando\AstroCoord;
 
 use \Marando\Units\Angle;
-
-// Can only be apparent
+use \Marando\Units\Distance;
 
 /**
- * @property Angle $alt Altitude
- * @property Angle $az  Azimuth
+ * Represents horizontal (alt/az) coordinates
+ *
+ * @property Angle $alt  Altitude
+ * @property Angle $az   Azimuth
+ * @property Angle $dist Observer to target distance
  */
 class Horiz {
 
+  use Traits\CopyTrait,
+      Traits\HorizFormat;
+
+  //----------------------------------------------------------------------------
+  // Constants
+  //----------------------------------------------------------------------------
+
+  /**
+   * Default Format:
+   * α h -69°38'48".697, A 087°21'04".049
+   */
+  const FORMAT_DEFAULT = '\h Hd°Hm\'Hs".Hu, \A Ad°Am\'As".Au';
+
+  /**
+   * Full Format:
+   * h -69°38'48".697, A 087°21'04".049, 0.768 AU
+   */
+  const FORMAT_FULL = '\h Hd°Hm\'Hs".Hu, \A Ad°Am\'As".Au, Da';
+
+  /**
+   * Degree Format:
+   * h -69.64686°, A 087.35112°
+   */
+  const FORMAT_DEGREES = '\h H°, \A A°';
+
+  /**
+   * Spaced Format:
+   * h -69 38 48.697, A 087 21 04.049
+   */
+  const FORMAT_SPACED = '\h Hd Hm Hs.Hu, \A Ad Am As.Au';
+
+  //----------------------------------------------------------------------------
+  // Constructors
+  //----------------------------------------------------------------------------
+
+  /**
+   * Creates a new horizontal coordinate
+   *
+   * @param Angle    $alt  Altitude, 0° = Horizon
+   * @param Angle    $az   Azimuth, 0° = North, 90° = East
+   * @param Distance $dist Observer to target distance
+   */
+  public function __construct(Angle $alt, Angle $az, Distance $dist = null) {
+    // Set position and distance
+    $this->setPosition($alt, $az);
+    $this->setDistance($dist);
+
+    // Set default string format
+    $this->format = static::FORMAT_DEFAULT;
+  }
+
+  //----------------------------------------------------------------------------
+  // Properties
+  //----------------------------------------------------------------------------
+
+  /**
+   * Altitude
+   * @var Angle
+   */
   protected $alt;
+
+  /**
+   * Azimuth
+   * @var Angle
+   */
   protected $az;
 
-  public function __construct(Angle $alt, Angle $az) {
-    $this->alt = $alt;
-    $this->az  = $az;
-  }
+  /**
+   * Observer to target distance
+   * @var Distance
+   */
+  protected $dist;
 
   public function __get($name) {
     switch ($name) {
@@ -46,30 +113,73 @@ class Horiz {
     }
   }
 
+  public function __set($name, $value) {
+    switch ($name) {
+      case 'alt':
+        return $this->setPosition($value, $this->az);
+
+      case 'az':
+        return $this->setPosition($this->alt, $value);
+
+      case 'dist':
+        return $this->setDistance($value);
+    }
+  }
+
+  //----------------------------------------------------------------------------
+  // Functions
+  //----------------------------------------------------------------------------
+
+  /**
+   * Sets the altitude and azimuth of this instance
+   *
+   * @param  Angle  $alt Altitude, 0° = Horizon
+   * @param  Angle  $az  Azimuth, 0° = North, 90° = East
+   * @return static
+   */
+  public function setPosition(Angle $alt, Angle $az) {
+    $this->alt = $alt;
+    $this->az  = $az;
+
+    return $this;
+  }
+
+  /**
+   * Sets the target to observer distance
+   *
+   * @param  Distance $dist
+   * @return static
+   */
+  public function setDistance(Distance $dist) {
+    $this->dist = $dist;
+
+    return $this;
+  }
+
+  /**
+   * Sets the topographic observation point of this instance
+   *
+   * @param  Geo    $geo
+   * @return static
+   */
+  //public function setTopo(Geo $geo) {
+  //throw new Exception('Not implemented');
+
+  /**
+   * 1. Convert this from Alt/Az Topo to Geocentric RA/Dec
+   * 2. Convert Geocentric to topo Alt/Az
+   */
+  //$this->topo = $geo;
+  //return $this;
+  //}
+  // // // Overrides
+
+  /**
+   * Represents this instance as a string
+   * @return string
+   */
   public function __toString() {
-     $deFormat = "%+03.0f";
-    $daFormat = "%+04.0f";
-    $mFormat  = "%02.0f";
-    $sFormat  = "%02.0f";
-    $eD = sprintf($deFormat, $this->alt->d);
-    $eM = sprintf($mFormat, abs($this->alt->m));
-    $eS = sprintf($sFormat, abs($this->alt->s));
-    $aD = sprintf($daFormat, abs($this->az->d));
-    $aM = sprintf($mFormat, abs($this->az->m));
-    $aS = sprintf($sFormat, abs($this->az->s));
-    $emic = str_replace('0.', '.',
-            round(abs(intval($this->alt->s) - $this->alt->s), 3));
-    $emic = str_pad($emic, 4, '0', STR_PAD_RIGHT);
-    $emic = round(abs(intval($this->alt->s) - $this->alt->s), 3) == 0 ?
-            '.000' : $emic;
-    $amic = str_replace('0.', '.',
-            round(abs(intval($this->az->s) - $this->az->s), 3));
-    $amic = str_pad($amic, 4, '0', STR_PAD_RIGHT);
-    $amic = round(abs(intval($this->az->s) - $this->az->s), 3) == 0 ?
-            '.000' : $amic;
-    $dist='';//$dist = $this->dist ? " Dist {$this->dist}" : '';
-    return "Alt {$eD}°{$eM}'{$eS}\"{$emic} Az {$aD}°{$aM}'{$aS}\"{$amic}{$dist}";
-    //return "Az {$aD}°{$aM}'{$aS}\"{$amic} El {$eD}°{$eM}'{$eS}\"{$emic}{$dist}";
+    return $this->format($this->format);
   }
 
 }

@@ -16,7 +16,7 @@ use \Marando\JPLephem\DE\SSObj;
 class GenericTest extends \PHPUnit_Framework_TestCase {
 
   public function test() {
-
+return;
     $frame = Frame::ICRF();
     $epoch = AstroDate::jd(2457335.472615741)->toEpoch();
 
@@ -28,7 +28,7 @@ class GenericTest extends \PHPUnit_Framework_TestCase {
     echo "\n" . $eq = (new Equat($frame, $epoch, $ra, $dec, $dist))->apparent();
 
     $eq        = new Equat($frame, $epoch, $ra, $dec, $dist);
-    $eq->obsrv = Geo::deg(27, -82);
+    $eq->topo = Geo::deg(27, -82);
 
     echo "\n" . $eq->toHoriz();
     echo "\n" . $eq->apparent();
@@ -50,15 +50,15 @@ class GenericTest extends \PHPUnit_Framework_TestCase {
 
 
     $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
-    $e->obsrv = $geo;
+    $e->topo = $geo;
     echo "\n\n" . $e;
     echo "\n" . $e->apparent();
     $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
-    $e->obsrv = $geo;
+    $e->topo = $geo;
     echo "\n" . $e->apparent();
 
     $e        = new Equat(Frame::ICRF(), Epoch::jd(2455586), $ra, $dec, $dist);
-    $e->obsrv = $geo;
+    $e->topo = $geo;
     echo "\n" . $e->toHoriz();
 
 
@@ -77,7 +77,7 @@ class GenericTest extends \PHPUnit_Framework_TestCase {
     echo "\n" . $e->apparent()->toHoriz();
 
     $e        = new Equat(Frame::ICRF(), Epoch::jd(2451586), $ra, $dec, $dist);
-    $e->obsrv = $geo;
+    $e->topo = $geo;
     echo "\n\n" . $e;
     echo "\n" . $e->apparent();
     echo "\n" . $e->apparent()->toHoriz();

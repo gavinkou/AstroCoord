@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,7 +40,7 @@ class Geo {
    * @param Angle $lon Longitude, West negative
    */
   public function __construct(Angle $lat, Angle $lon) {
-    $this->lat = $lat->norm(0, 90);
+    $this->lat = $lat->norm(-180, 180);
     $this->lon = $lon->norm(-90, 90);
   }
 

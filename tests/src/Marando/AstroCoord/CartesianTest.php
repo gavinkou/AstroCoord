@@ -19,7 +19,7 @@ class CartesianTest extends PHPUnit_Framework_TestCase {
   public function testAdd() {
     // Frame & epoch
     $frame = Frame::ICRF();
-    $epoch = AstroDate::parse('2015-Mar-20')->toEpoch();
+    $epoch = AstroDate::parse('2015-Mar-20 00:00:00')->toEpoch();
 
     // Position / velocity
     $x  = Distance::au(+1.18);
@@ -45,6 +45,25 @@ class CartesianTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals(7.38, $c->vx->aud);
     $this->assertEquals(4.91, $c->vy->aud);
     $this->assertEquals(1.83, $c->vz->aud);
+
+    // // //
+    // Position / velocity
+    $x = Distance::au(+1.18);
+    $y = Distance::au(-3.65);
+    $z = Distance::au(-2.12);
+    $a = new Cartesian($frame, $epoch, $x, $y, $z);
+
+    $x = Distance::au(+9.32);
+    $y = Distance::au(-5.25);
+    $z = Distance::au(-6.89);
+    $b = new Cartesian($frame, $epoch, $x, $y, $z);
+
+    $c = $a->add($b);
+    $this->assertEquals(10.5, $c->x->au);
+    $this->assertEquals(-8.9, $c->y->au);
+    $this->assertEquals(-9.01, $c->z->au);
+
+    $s = (string)$c;
   }
 
   /**
@@ -53,7 +72,7 @@ class CartesianTest extends PHPUnit_Framework_TestCase {
   public function testSubtract() {
     // Frame & epoch
     $frame = Frame::ICRF();
-    $epoch = AstroDate::parse('2015-Mar-20')->toEpoch();
+    $epoch = AstroDate::parse('2015-Mar-20 00:00:00')->toEpoch();
 
     // Position / velocity
     $x  = Distance::au(+1.18);
@@ -98,6 +117,13 @@ class CartesianTest extends PHPUnit_Framework_TestCase {
     $this->assertEquals(14.4966, $eq->ra->hours, 'ra', 1e-2);
     $this->assertEquals(-62.681, $eq->dec->deg, 'dec', 1e-1);
     $this->assertEquals(1.29, $eq->dist->pc, 'dist', 1e-2);
+  }
+
+  public function testCreateWithAstroDate() {
+    $x = Distance::au(+9.32);
+    $y = Distance::au(-5.25);
+    $z = Distance::au(-6.89);
+    $c = new Cartesian(Frame::ICRF(), AstroDate::now(), $x, $y, $z);
   }
 
 }

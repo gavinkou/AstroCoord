@@ -3,6 +3,7 @@
 namespace Marando\AstroCoord;
 
 use \Marando\AstroDate\AstroDate;
+use \Marando\AstroDate\Epoch;
 use \Marando\Units\Angle;
 use \Marando\Units\Distance;
 use \Marando\Units\Pressure;
@@ -18,81 +19,76 @@ class EquatTest extends PHPUnit_Framework_TestCase {
   /**
    * @covers Marando\AstroCoord\Equat::apparent
    */
-  public function testApparent() {
-    return;
-    /**
-     * Geocentric Apparent Place. Test values from JPL Horizons system, position
-     * of Jupiter on JD 2457335.472615741 TT
-     */
-    $frame  = Frame::ICRF();
-    $epoch  = AstroDate::jd(2457335.472615741)->toEpoch();
-    $ra     = Time::hms(11, 16, 46.60);
-    $dec    = Angle::dms(5, 45, 32.5);
-    $dist   = Distance::au(5.8);
-    $aGeo   = (new Equat($frame, $epoch, $ra, $dec, $dist))->apparent();
-    $expRA  = Time::hms(11, 17, 34.89);
-    $expDec = Angle::dms(5, 40, 23.3);
-    $this->assertEquals($expRA, $aGeo->ra, 'geocentric apparent, ra', 1e-3);
-    $this->assertEquals($expDec, $aGeo->dec, 'geocentric apparent, dec', 1e-3);
+  public function testApparentGeocentr() {
+    // Earth -> Venus @ 2015-Nov-08 23:20:34.000 UT
+    $dt = AstroDate::jd(2457335.472615740);
+    $x  = Distance::au(-7.956853147170494E-01);
+    $y  = Distance::au(-8.073016903017960E-03);
+    $z  = Distance::au(1.392567642390632E-02);
+    $c  = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
+
+    $apparent = $c->toEquat()->apparent();
+    echo "\n".$apparent->toHoriz();
+
+    $prec = Angle::arcsec(3)->deg;
+    $this->assertEquals(180.78098, $apparent->ra->toAngle()->deg, 'ra', $prec);
+    $this->assertEquals(0.91583, $apparent->dec->deg, 'dec', $prec);
+  }
+
+  /**
+   * @covers Marando\AstroCoord\Equat::apparent
+   */
+  public function testApparentTopo() {
+    // Earth -> Venus @ 2015-Nov-08 23:20:34.000 UT
+    $dt          = AstroDate::jd(2457335.472615740);
+    $x           = Distance::au(-7.956853147170494E-01);
+    $y           = Distance::au(-8.073016903017960E-03);
+    $z           = Distance::au(1.392567642390632E-02);
+    $c           = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
+    $equat       = $c->toEquat();
+    $equat->topo = Geo::deg(27.9494000, -82.4569);
 
 
-    return;
+    $apparent = $equat->apparent();
 
-
-    //
-    $epoch = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
-    $ra    = Time::hms(22, 51, 15.99);
-    $dec   = Angle::dms(-9, 45, 03.3);
-    $geo   = Geo::deg(27, -82);
-
-    $astrom        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
-    $astrom->obsrv = $geo;
-
-    $pressure = Pressure::inHg(30);
-    $temp     = Temperature::F(75);
-    $humidity = 0.7;
-    $app      = $astrom->apparent($pressure, $temp, $humidity);
-
-    // TODO: Figure out why this inst exact
-    $this->assertEquals(343.60341, $app->ra->toAngle()->deg, 'ra', 1);
-    $this->assertEquals(-9.39349, $app->dec->deg, 'dec', 0.25);
+    $prec = 0.3;
+    $this->assertEquals(180.77899, $apparent->ra->toAngle()->deg, 'ra', $prec);
+    $this->assertEquals(0.91437, $apparent->dec->deg, 'dec', $prec);
   }
 
   /**
    * @covers Marando\AstroCoord\Equat::toHoriz
    */
   public function testToHoriz() {
-    $epoch = AstroDate::parse('2015-Mar-20 00:00:00.000')->toEpoch();
-    $ra    = Time::hms(22, 51, 15.99);
-    $dec   = Angle::dms(-9, 45, 03.3);
-    $geo   = Geo::deg(27, -82);
+    $epoch      = AstroDate::parse('2015-Nov-08 23:20:34.000')->toEpoch();
+    $ra         = Angle::deg(180.58211)->toTime();
+    $dec        = Angle::deg(1.00232);
+    $astr       = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
+    $astr->topo = Geo::deg(27.9494000, -82.4569);
 
-    $astr        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
-    $astr->obsrv = $geo;
 
     $horiz = $astr->toHoriz();
 
-    // TODO: Figure out why this inst exact
-    $this->assertEquals(-23.4393, $horiz->alt->deg, 'alt', 1);
-    $this->assertEquals(271.2178, $horiz->az->deg, 'az', 0.5);
+    $prec = Angle::arcsec(9)->deg;
+    $this->assertEquals(-37.8887, $horiz->alt->deg, 'alt', $prec);
+    $this->assertEquals(295.8340, $horiz->az->deg, 'az', $prec);
   }
 
   public function testToEclip() {
-    $epoch = AstroDate::parse('2015-Nov-08 23:11:17')->toEpoch();
-    $ra    = Angle::deg(180.77235)->toTime();
-    $dec   = Angle::deg(0.91677);
+    // Earth -> Venus @ 2015-Nov-08 23:20:34.000 UT
+    $dt    = AstroDate::jd(2457335.472615740);
+    $x     = Distance::au(-7.956853147170494E-01);
+    $y     = Distance::au(-8.073016903017960E-03);
+    $z     = Distance::au(1.392567642390632E-02);
+    $c     = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
+    $equat = $c->toEquat();
 
 
+    $eclip = $equat->toEclip();
 
-    echo "\n\n" . $eq = new Equat(Frame::ICRF(), $epoch, $ra, $dec);
-    echo "\n" . $eq->toEclip();
-
-    echo "\n\n" . $eq = new Equat(Frame::ICRF(), $epoch, $ra, $dec);
-    echo "\n" . $eq->apparent()->toEclip();
-
-    echo "\n\n" . $eq        = new Equat(Frame::ICRF(), $epoch, $ra, $dec);
-    $eq->obsrv = Geo::deg(27, -82);
-    echo "\n" . $eq->apparent()->toEclip();
+    $prec = Angle::arcmin(13)->deg;
+    $this->assertEquals(180.3510658, $eclip->lon->deg, 'λ', $prec);
+    $this->assertEquals(1.1487465, $eclip->lat->deg, 'β', $prec);
   }
 
 }

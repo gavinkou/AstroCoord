@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,21 +24,86 @@ use \Marando\Units\Angle;
 use \Marando\Units\Distance;
 
 /**
- * @property Angle    $lon  Ecliptic longitude
- * @property Angle    $lat  Ecliptic latitude
+ * Represents ecliptic coordinates
+ *
+ * @property Angle    $lon  Ecliptic longitude, λ
+ * @property Angle    $lat  Ecliptic latitude, β
  * @property Distance $dist Observer to target distance
  */
 class Eclip {
 
-  protected $lon;
-  protected $lat;
-  protected $dist;
+  use Traits\CopyTrait,
+      Traits\EclipFormat;
 
+  //----------------------------------------------------------------------------
+  // Constants
+  //----------------------------------------------------------------------------
+
+  /**
+   * Default Format:
+   * λ 195°41'03".276, β +07°46'10".325
+   */
+  const FORMAT_DEFAULT = 'λ Ld°Lm\'Ls".Lu, β +Bd°Bm\'Bs".Bu';
+
+  /**
+   * Full Format:
+   * λ 195°41'03".276, β +07°46'10".325, 0.768 AU
+   */
+  const FORMAT_FULL = 'λ Ld°Lm\'Ls".Lu, β +Bd°Bm\'Bs".Bu, Da';
+
+  /**
+   * Degree Format:
+   * λ 195.68424, β +07.76953
+   */
+  const FORMAT_DEGREES = 'λ L°, β +B°';
+
+  /**
+   * Spaced Format:
+   * λ 195 195.68424 03.276, β +07 46 10.325
+   */
+  const FORMAT_SPACED = 'λ Ld Lm Ls.Lu, β +Bd Bm Bs.Bu';
+
+  //----------------------------------------------------------------------------
+  // Constructors
+  //----------------------------------------------------------------------------
+
+  /**
+   * Creates a new Ecliptic coordinate
+   *
+   * @param Angle    $lon  Ecliptic longitude
+   * @param Angle    $lat  Ecliptic latitude
+   * @param Distance $dist Observer to target distance
+   */
   public function __construct(Angle $lon, Angle $lat, Distance $dist = null) {
-    $this->lon  = $lon;
-    $this->lat  = $lat;
-    $this->dist = $dist;
+    // Set position and distance
+    $this->setPosition($lon, $lat);
+    $this->setDistance($dist);
+
+    // Set default string format
+    $this->format = static::FORMAT_DEFAULT;
   }
+
+  //----------------------------------------------------------------------------
+  // Properties
+  //----------------------------------------------------------------------------
+
+  /**
+   * Ecliptic longitude
+   * @var Angle
+   */
+  protected $lon;
+
+  /**
+   * Ecliptic latitude
+   * @var Angle
+   */
+  protected $lat;
+
+  /**
+   * Observer to target distance
+   * @var Distance
+   */
+  protected $dist;
 
   public function __get($name) {
     switch ($name) {
@@ -49,32 +114,57 @@ class Eclip {
     }
   }
 
+  public function __set($name, $value) {
+    switch ($name) {
+      case 'lon':
+        return $this->setPosition($value, $this->lat);
 
+      case 'lat':
+        return $this->setPosition($this->lon, $value);
 
+      case 'dist':
+        return $this->setDistance($value);
+    }
+  }
+
+  //----------------------------------------------------------------------------
+  // Functions
+  //----------------------------------------------------------------------------
+
+  /**
+   * Sets the altitude and azimuth of this instance
+   *
+   * @param  Angle  $lon Ecliptic longitude
+   * @param  Angle  $lat Ecliptic latitude
+   * @return static
+   */
+  public function setPosition(Angle $lon, Angle $lat) {
+    $this->lon = $lon;
+    $this->lat = $lat;
+
+    return $this;
+  }
+
+  /**
+   * Sets the target to observer distance
+   *
+   * @param  Distance $dist
+   * @return static
+   */
+  public function setDistance(Distance $dist) {
+    $this->dist = $dist;
+
+    return $this;
+  }
+
+  // // // Overrides
+
+  /**
+   * Represents this instance as a string
+   * @return string
+   */
   public function __toString() {
-    $deFormat = "%+03.0f";
-    $daFormat = "%+04.0f";
-    $mFormat  = "%02.0f";
-    $sFormat  = "%02.0f";
-    $eD       = sprintf($deFormat, $this->lon->d);
-    $eM       = sprintf($mFormat, abs($this->lon->m));
-    $eS       = sprintf($sFormat, abs($this->lon->s));
-    $aD       = sprintf($daFormat, abs($this->lat->d));
-    $aM       = sprintf($mFormat, abs($this->lat->m));
-    $aS       = sprintf($sFormat, abs($this->lat->s));
-    $emic     = str_replace('0.', '.',
-            round(abs(intval($this->lon->s) - $this->lon->s), 3));
-    $emic     = str_pad($emic, 4, '0', STR_PAD_RIGHT);
-    $emic     = round(abs(intval($this->lon->s) - $this->lon->s), 3) == 0 ?
-            '.000' : $emic;
-    $amic     = str_replace('0.', '.',
-            round(abs(intval($this->lat->s) - $this->lat->s), 3));
-    $amic     = str_pad($amic, 4, '0', STR_PAD_RIGHT);
-    $amic     = round(abs(intval($this->lat->s) - $this->lat->s), 3) == 0 ?
-            '.000' : $amic;
-    $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
-    return "Lon {$eD}°{$eM}'{$eS}\"{$emic} Lat {$aD}°{$aM}'{$aS}\"{$amic}{$dist}";
-    //return "Az {$aD}°{$aM}'{$aS}\"{$amic} El {$eD}°{$eM}'{$eS}\"{$emic}{$dist}";
+    return $this->format($this->format);
   }
 
 }

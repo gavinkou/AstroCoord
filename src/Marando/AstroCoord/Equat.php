@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -20,11 +20,12 @@
 
 namespace Marando\AstroCoord;
 
+use \Exception;
 use \Marando\AstroCoord\Geo;
 use \Marando\AstroCoord\Horiz;
 use \Marando\AstroDate\Epoch;
 use \Marando\IAU\IAU;
-use \Marando\IAU\iauASTROM;
+use \Marando\IERS\IERS;
 use \Marando\Units\Angle;
 use \Marando\Units\Distance;
 use \Marando\Units\Pressure;
@@ -35,15 +36,44 @@ use \Marando\Units\Time;
  * Represents an equatorial coordinate
  *
  * @param Frame $frame Reference frame
- * @param Epoch $epoch Observation epoch
- * @param Geo   $obsrv Geographic observation location
+ * @param Epoch $epoch Observational epoch
+ * @param Geo   $topo  Observational location
  * @param Time  $ra    Right ascension
  * @param Angle $dec   Declination
  * @param Angle $dist  Observer to target distance
  */
 class Equat {
 
-  use Traits\CopyTrait;
+  use Traits\CopyTrait,
+      Traits\EquatFormat;
+
+  //----------------------------------------------------------------------------
+  // Constants
+  //----------------------------------------------------------------------------
+
+  /**
+   * Default Format:
+   * α 13ʰ09ᵐ43ˢ.648, δ +01°00'09".387 (ICRF/J2000.0)
+   */
+  const FORMAT_DEFAULT = 'α RhʰRmᵐRsˢ.Ru, δ +Dd°Dm\'Ds".Du (F{Y M. c T})';
+
+  /**
+   * Full Format:
+   * α 13ʰ09ᵐ43ˢ.648, δ +01°00'09".387, 0.798 AU (ICRF/J2000.0)
+   */
+  const FORMAT_FULL = 'α RhʰRmᵐRsˢ.Ru, δ +Dd°Dm\'Ds".Du, Da (F{Y M. c T})';
+
+  /**
+   * Degree Format:
+   * α 197.43186°, δ +1.00261° (ICRF/J2000.0)
+   */
+  const FORMAT_DEGREES = 'α R°, δ +D° (F{Y M. c T})';
+
+  /**
+   * Spaced Format:
+   * α 13 09 43.648, δ +01 00 09.387 (ICRF/J2000.0)
+   */
+  const FORMAT_SPACED = 'α Rh Rm Rs.Ru, δ +Dd Dm Ds.Du (F{Y M. c T})';
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -52,13 +82,13 @@ class Equat {
   /**
    * Creates a new equatorial coordinate
    *
-   * @param Frame    $frame Reference frame
-   * @param Epoch    $epoch Observation epoch
-   * @param Time     $ra    Right ascension
-   * @param Angle    $dec   Declination
-   * @param Distance $dist  Distance
+   * @param Frame           $frame Reference frame
+   * @param Epoch|AstroDate $epoch Observational epoch
+   * @param Time            $ra    Right ascension
+   * @param Angle           $dec   Declination
+   * @param Distance        $dist  Observer to target distance
    */
-  public function __construct(Frame $frame, Epoch $epoch, Time $ra, Angle $dec,
+  public function __construct(Frame $frame, $epoch, Time $ra, Angle $dec,
           Distance $dist = null) {
 
     // Set reference frame and observation epoch
@@ -66,9 +96,11 @@ class Equat {
     $this->epoch = $epoch;
 
     // Set right ascension, declination and distance
-    $this->ra   = $ra->setUnit('hsm');
-    $this->dec  = $dec;
-    $this->dist = $dist;
+    $this->setPosition($ra, $dec);
+    $this->setDistance($dist);
+
+    // Set default format
+    $this->format = static::FORMAT_DEFAULT;
   }
 
   //----------------------------------------------------------------------------
@@ -82,7 +114,7 @@ class Equat {
   protected $frame;
 
   /**
-   * Observation epoch
+   * Observational epoch
    * @var Epoch
    */
   protected $epoch;
@@ -115,7 +147,7 @@ class Equat {
    * Geographic observation location
    * @var Geo
    */
-  protected $obsrv;
+  protected $topo;
 
   /**
    * Holds a copy of this instance before being converted to apparent
@@ -130,15 +162,24 @@ class Equat {
       case 'ra':
       case 'dec':
       case 'dist':
-      case 'obsrv':
+      case 'topo':
         return $this->{$name};
     }
   }
 
   public function __set($name, $value) {
     switch ($name) {
-      case 'obsrv':
-        $this->{$name} = $value;
+      case 'topo':
+        return $this->setTopo($value);
+
+      case 'ra':
+        return $this->setPosition($value, $this->dec);
+
+      case 'dec':
+        return $this->setPosition($this->ra, $value);
+
+      case 'dist':
+        return $this->setDistance($value);
     }
   }
 
@@ -147,34 +188,80 @@ class Equat {
   //----------------------------------------------------------------------------
 
   /**
-   * Returns the apparent coordinates of this instance. Optionally weather
-   * parameters can be supplied to apply atmospheric refraction to the result.
+   * Sets the right ascension and declination of this instance
+   *
+   * @param  Time   $ra  Right ascension
+   * @param  Angle  $dec Declination
+   * @return static
+   */
+  public function setPosition(Time $ra, Angle $dec) {
+    $this->ra  = $ra->setUnit('hms');
+    $this->dec = $dec;
+
+    return $this;
+  }
+
+  /**
+   * Sets the topographic observational location of this instance
+   *
+   * @param  Geo    $geo
+   * @return static
+   */
+  public function setTopo(Geo $geo) {
+    $this->topo = $geo;
+
+    return $this;
+  }
+
+  /**
+   * Sets the target to observer distance
+   *
+   * @param  Distance $dist
+   * @return static
+   */
+  public function setDistance(Distance $dist) {
+    $this->dist = $dist;
+
+    return $this;
+  }
+
+  /**
+   * Returns true of the instance is apparent
+   * @return bool
+   */
+  public function isApparent() {
+    return $this->apparent == true ? true : false;
+  }
+
+  /**
+   * Returns the apparent coordinates for this instance. Optional weather
+   * parameters may be supplied to apply atmospheric refraction to the result.
    *
    * @param  Pressure    $pressure Atmospheric pressure
    * @param  Temperature $temp     Atmospheric temperature
    * @param  float       $humidity Relative humidity
    * @return static
    */
-  public function apparent(/* Geo $geo = null, */ Pressure $pressure = null,
-          Temperature $temp = null, $humidity = null) {
+  public function apparent(Pressure $pressure = null, Temperature $temp = null,
+          $humidity = null) {
 
     // Check if aleady converted to apparent, and return that if so
     if ($this->apparent)
-      return $this->copy();
+      return $this;
 
     // Save original coordinates
     $this->orig = $this->copy();
 
     // If no topographic location set, return apparent geocentric
-    if ($this->obsrv == false || $this->obsrv == null)
+    if ($this->topo == false || $this->topo == null)
       return $this->IRCStoApparentGeo();
 
     // If topographic location set, but no weather, return topographic apparent
-    if ($this->obsrv && !($pressure || $temp || $humidity))
+    if ($this->topo && !($pressure || $temp || $humidity))
       return $this->IRCStoTopo();
 
     // If topographic location set, and weather, return topographic observed
-    if ($this->obsrv && ($pressure || $temp || $humidity))
+    if ($this->topo && ($pressure || $temp || $humidity))
       return $this->IRCStoObserved();
 
     throw new Exception('An error has occured finding apparent coordinates');
@@ -189,28 +276,47 @@ class Equat {
    * @param  float       $humidity Relative humidity
    * @return Horiz
    */
-  public function toHoriz(/* Geo $geo = null, */Pressure $pressure = null,
-          Temperature $temp = null, $humidity = null) {
+  public function toHoriz(Pressure $pressure = null, Temperature $temp = null,
+          $humidity = null) {
+
+    // Use original coordinates if already apparent
+    $orig = $this->isApparent() ? $this->orig->copy() : $this->copy();
 
     // Return topographic observed horizontal coordinates
-    return $this->IRCStoObserved('h', $pressure, $temp, $humidity);
+    return $orig->IRCStoObserved('h', $pressure, $temp, $humidity);
   }
 
+  /**
+   * Converts this instance to ecliptic coordinates
+   * @param  Angle $obli The Earth's obliquity
+   * @return Eclip
+   */
   public function toEclip(Angle $obli = null) {
-    $α = $this->ra->toAngle()->rad;
-    $δ = $this->dec->rad;
-    $ε = $obli ? $obli->rad : $this->obli()->rad;
+    // Use original coordinates if already apparent
+    $orig       = $this->isApparent() ? $this->orig->copy() : $this->copy();
+    $orig->topo = null;
+
+    $α = $orig->ra->toAngle()->rad;
+    $δ = $orig->dec->rad;
+    $ε = $obli ? $obli->rad : $orig->obli()->rad;
 
     $λ = atan2((sin($α) * cos($ε) + tan($δ) * sin($ε)), cos($α));
     $β = asin(sin($δ) * cos($ε) - cos($δ) * sin($ε) * sin($α));
 
-    return new Eclip(Angle::rad($λ), Angle::rad($β), $this->dist);
+    return new Eclip(Angle::rad($λ)->norm(), Angle::rad($β), $this->dist);
   }
 
   // // // Protected
 
+  /**
+   * Finds the Earth's true obliquity for this instances observational epoch if
+   * the instance is apparent, or returns the mean obliquity if it is
+   * astrometric
+   *
+   * @return Angle
+   */
   protected function obli() {
-    $jdTT = $this->epoch->toDate()->copy()->toTT()->jd;
+    $jdTT = $this->epoch->toDate()->copy()->toTT()->toJD();
     $ε0   = Angle::rad(IAU::Obl06($jdTT, 0));
 
     if ($this->apparent) {
@@ -233,11 +339,11 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->jd;
+    $date1 = $this->epoch->toDate()->copy()->toTDB()->toJD();
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
-    $px    = 0;
+    $px    = $this->dist ? (8.794 / 3600) / $this->dist->au : 0;
 
     // ICRS -> CIRS (geocentric observer)
     IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
@@ -285,18 +391,18 @@ class Equat {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
-    $date1 = $this->epoch->jd;
+    $date1 = $this->epoch->toDate()->toTDB()->toJD();
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
-    $px    = 0;
-    $utc1  = $this->epoch->toDate()->toUTC()->jd;
-    $dut1  = .155;
-    $elong = $this->obsrv ? $this->obsrv->lon->rad : 0;
-    $phi   = $this->obsrv ? $this->obsrv->lat->rad : 0;
+    $px    = $this->dist->au > 0 ? (8.794 / 3600) / $this->dist->au : 0;
+    $utc1  = $this->epoch->toDate()->toUTC()->toJD();
+    $dut1  = IERS::jd($utc1)->dut1();
+    $elong = $this->topo ? $this->topo->lon->rad : 0;
+    $phi   = $this->topo ? $this->topo->lat->rad : 0;
     $hm    = 0; //$this->obsrv->height->m;
-    $xp    = 0;
-    $yp    = 0;
+    $xp    = IERS::jd($utc1)->x() / 3600 * pi() / 180;
+    $yp    = IERS::jd($utc1)->y() / 3600 * pi() / 180;
     $phpa  = $pressure ? $pressure->mbar : 0;
     $tc    = $temp ? $temp->c : 0;
     $rh    = $humidity ? $humidity : 0;
@@ -331,7 +437,9 @@ class Equat {
     }
     else {
       // Prepare new horizontal instance
-      $horiz = new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob));
+      $horiz = new Horiz(Angle::rad(deg2rad(90) - $zob), Angle::rad($aob),
+              $this->dist);
+
       return $horiz;
     }
   }
@@ -343,26 +451,7 @@ class Equat {
    * @return string
    */
   public function __toString() {
-    $drFormat = "%+03.0f";
-    $ddFormat = "%+03.0f";
-    $mFormat  = "%02.0f";
-    $sFormat  = "%02.0f";
-    $rD       = sprintf($drFormat, $this->ra->h);
-    $rM       = sprintf($mFormat, abs($this->ra->m));
-    $rS       = sprintf($sFormat, abs($this->ra->s));
-    $dD       = sprintf($ddFormat, $this->dec->d);
-    $dM       = sprintf($mFormat, abs($this->dec->m));
-    $dS       = sprintf($sFormat, abs($this->dec->s));
-    $rmic     = str_replace('0.', '', round(abs($this->ra->micro), 3));
-    $rmic     = str_pad($rmic, 3, '0', STR_PAD_RIGHT);
-    $dmic     = str_replace('0.', '',
-            round(abs(intval($this->dec->s) - $this->dec->s), 3));
-    $dmic     = str_pad($dmic, 3, '0', STR_PAD_RIGHT);
-    $dist     = ''; //$dist = $this->dist ? " Dist {$this->dist}" : '';
-
-    $frame = $this->apparent ? "$this->epoch apparent" : "$this->frame";
-
-    return "RA {$rD}ʰ{$rM}ᵐ{$rS}ˢ.{$rmic} Dec {$dD}°{$dM}'{$dS}\".{$dmic} ({$frame})";
+    return $this->format($this->format);
   }
 
 }
