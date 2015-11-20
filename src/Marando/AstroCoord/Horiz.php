@@ -25,14 +25,43 @@ use \Marando\Units\Distance;
 
 /**
  * Represents horizontal altitude and azimuth coordinates
- * 
+ *
  * @property Angle $alt  Altitude
  * @property Angle $az   Azimuth
  * @property Angle $dist Observer to target distance
  */
 class Horiz {
 
-  use Traits\CopyTrait;
+  use Traits\CopyTrait,
+      Traits\HorizFormat;
+
+  //----------------------------------------------------------------------------
+  // Constants
+  //----------------------------------------------------------------------------
+
+  /**
+   * Default Format:
+   * α h -69°38'48".697, A 087°21'04".049
+   */
+  const FORMAT_DEFAULT = '\h Hd°Hm\'Hs".Hu, \A Ad°Am\'As".Au';
+
+  /**
+   * Full Format:
+   * h -69°38'48".697, A 087°21'04".049, 0.768 AU
+   */
+  const FORMAT_FULL = '\h Hd°Hm\'Hs".Hu, \A Ad°Am\'As".Au, Da';
+
+  /**
+   * Degree Format:
+   * h -69.64686°, A 087.35112°
+   */
+  const FORMAT_DEGREES = '\h H°, \A A°';
+
+  /**
+   * Spaced Format:
+   * h -69 38 48.697, A 087 21 04.049
+   */
+  const FORMAT_SPACED = '\h Hd Hm Hs.Hu, \A Ad Am As.Au';
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -41,6 +70,8 @@ class Horiz {
   public function __construct(Angle $alt, Angle $az, Distance $dist = null) {
     $this->setPosition($alt, $az);
     $this->setDistance($dist);
+
+    $this->format = static::FORMAT_DEFAULT;
   }
 
   //----------------------------------------------------------------------------
@@ -139,6 +170,9 @@ class Horiz {
    * @return string
    */
   public function __toString() {
+    return $this->format($this->format);
+
+
     // Altitude
     $hd = sprintf('%03.0f', $this->alt->d);
     $hm = sprintf('%02d', abs($this->alt->m));

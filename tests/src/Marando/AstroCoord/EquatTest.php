@@ -27,41 +27,9 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $z  = Distance::au(1.392567642390632E-02);
     $c  = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
 
-
-    echo "\n" . $c;
-    echo "\n" . $c->toEquat()->toEclip();
-    echo "\n" . $c->toEquat()->toHoriz();
-    echo "\n" . $d        = $c->toEquat();
-    echo "\n" . $apparent = $c->toEquat()->apparent();
-/*
-    $d->dec   = Angle::rad(1.23);
-    //$d->dist   =  Distance::ly(400.453);
-    echo "\n" . $d;
-    $d->ra = Time::hours(3.3432423);
-
-    echo "\n\n\n". $d->format('RA {RD%02.2f}°, Dec {DD%02.2f}°');
-    echo "\n\n\n". $d->format('RA {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, Dec {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.3f}, {DAU%02.2f} ({F})');
-    echo "\n\n\n". $d->apparent()->format('RA {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, Dec {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.3f}, {DAU%02.2f} ({FY M. c T})');
-    echo "\n\n\n". $d->apparent()->format('RA {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, Dec {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.3f}, {D%02.2f} ({FY M. c T})');
-
-
-    // FORMAT_DEFAULT
-    echo "\n\n\n". $d->apparent()->format('RA {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, Dec {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.3f}, {DAU%02.3f}');
-
-    // FORMAT_DEFAULT_F
-    echo "\n\n\n". $d->apparent()->format('RA {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, Dec {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.3f}, {DAU%02.3f} ({FY M. c T})');
-
-    // FORMAT_SPACED
-    echo "\n\n\n". $d->apparent()->format('RA {Rh%02d} {Rm%02d} {Rs%02d}.{Ru%.3f}, Dec {Dd%+03d} {Dm%02d} {Ds%02d}.{Du%.3f}, {DAU%02.3f}');
-
-    // FORMAT_DEGREES
-    echo "\n\n\n". $d->apparent()->format('RA {RD%02.3f}°, Dec {DD%02.3f}°, {DAU%2.3f}');
-
-    // FORMAT_DEGREES_F
-    echo "\n\n\n". $d->apparent()->format('RA {RD%02.3f}°, Dec {DD%02.3f}°, {DAU%2.3f}');
-    exit;
- *
- */
+    echo "\n".$apparent = $c->toEquat()->apparent();
+    echo "\n".$apparent->toHoriz();
+    echo "\n".$apparent->toEclip();
 
     $prec = Angle::arcsec(3)->deg;
     $this->assertEquals(180.78098, $apparent->ra->toAngle()->deg, 'ra', $prec);
@@ -73,12 +41,12 @@ class EquatTest extends PHPUnit_Framework_TestCase {
    */
   public function testApparentTopo() {
     // Earth -> Venus @ 2015-Nov-08 23:20:34.000 UT
-    $dt           = AstroDate::jd(2457335.472615740);
-    $x            = Distance::au(-7.956853147170494E-01);
-    $y            = Distance::au(-8.073016903017960E-03);
-    $z            = Distance::au(1.392567642390632E-02);
-    $c            = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
-    $equat        = $c->toEquat();
+    $dt          = AstroDate::jd(2457335.472615740);
+    $x           = Distance::au(-7.956853147170494E-01);
+    $y           = Distance::au(-8.073016903017960E-03);
+    $z           = Distance::au(1.392567642390632E-02);
+    $c           = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
+    $equat       = $c->toEquat();
     $equat->topo = Geo::deg(27.9494000, -82.4569);
 
 
@@ -93,10 +61,10 @@ class EquatTest extends PHPUnit_Framework_TestCase {
    * @covers Marando\AstroCoord\Equat::toHoriz
    */
   public function testToHoriz() {
-    $epoch       = AstroDate::parse('2015-Nov-08 23:20:34.000')->toEpoch();
-    $ra          = Angle::deg(180.58211)->toTime();
-    $dec         = Angle::deg(1.00232);
-    $astr        = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
+    $epoch      = AstroDate::parse('2015-Nov-08 23:20:34.000')->toEpoch();
+    $ra         = Angle::deg(180.58211)->toTime();
+    $dec        = Angle::deg(1.00232);
+    $astr       = new Equat(Frame::ICRF(), $epoch, $ra, $dec, Distance::m(0));
     $astr->topo = Geo::deg(27.9494000, -82.4569);
 
 

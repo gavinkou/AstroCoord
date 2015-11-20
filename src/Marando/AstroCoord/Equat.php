@@ -45,16 +45,36 @@ use \Marando\Units\Time;
  */
 class Equat {
 
-  use Traits\CopyTrait;
+  use Traits\CopyTrait,
+      Traits\EquatFormat;
 
   //----------------------------------------------------------------------------
-  // Constatns
+  // Constants
   //----------------------------------------------------------------------------
 
-  const FORMAT_DEFAULT    = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {D%02.3f} ({FY M. c T})';
-  const FORMAT_DEFAULT_NF = 'α {Rh%02d}ʰ{Rm%02d}ᵐ{Rs%02d}ˢ.{Ru%.3f}, δ {Dd%+03d}°{Dm%02d}\'{Ds%02d}".{Du%.2f}, {D%02.3f}';
-  const FORMAT_SPACED     = 'α {Rh%02d} {Rm%02d} {Rs%02d}.{Ru%.3f}, δ {Dd%+03d} {Dm%02d} {Ds%02d}.{Du%.2f} {D%02.3f} ({FY M. c T})';
-  const FORMAT_DEGREES    = 'α {RD%02.4f}°, δ {DD%+02.4f}° {D%02.3f} ({FY M. c T})';
+  /**
+   * Default Format:
+   * α 13ʰ09ᵐ43ˢ.648, δ +01°00'09".387 (ICRF/J2000.0)
+   */
+  const FORMAT_DEFAULT = 'α RhʰRmᵐRsˢ.Ru, δ +Dd°Dm\'Ds".Du (F{Y M. c T})';
+
+  /**
+   * Full Format:
+   * α 13ʰ09ᵐ43ˢ.648, δ +01°00'09".387, 0.798 AU (ICRF/J2000.0)
+   */
+  const FORMAT_FULL = 'α RhʰRmᵐRsˢ.Ru, δ +Dd°Dm\'Ds".Du, Da (F{Y M. c T})';
+
+  /**
+   * Degree Format:
+   * α 197.43186°, δ +1.00261° (ICRF/J2000.0)
+   */
+  const FORMAT_DEGREES = 'α R°, δ +D° (F{Y M. c T})';
+
+  /**
+   * Spaced Format:
+   * α 13 09 43.648, δ +01 00 09.387 (ICRF/J2000.0)
+   */
+  const FORMAT_SPACED = 'α Rh Rm Rs.Ru, δ +Dd Dm Ds.Du (F{Y M. c T})';
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -135,7 +155,8 @@ class Equat {
    * @var static
    */
   protected $orig;
-  protected $format;
+
+
 
   public function __get($name) {
     switch ($name) {
@@ -432,6 +453,7 @@ class Equat {
   public function __toString() {
     return $this->format($this->format);
 
+
     // Right Ascension
     $αd = sprintf('%02d', abs($this->ra->h));
     $αm = sprintf('%02d', abs($this->ra->m));
@@ -447,92 +469,29 @@ class Equat {
     $δμ = str_pad(abs($δμ), 3, '0', STR_PAD_RIGHT);
 
     // Distance and frame
-    $r = $this->dist->copy()->setUnit('AU');
-    $d = $r->au < Distance::pc(1)->au ? $r : $r->setUnit('pc');
-    $d = $r->au < 1 ? $r->setUnit('km') : $r;
-    $f = $this->apparent ? $this->epoch : "$this->frame";
+    $d = '';
+    if ($this->format['dist']) {
+      $d = $this->dist->setUnit($this->format['dist']);
+      $d = ", $d ";
+    }
+    else {
+      $d = ' ';
+    }
+
+    // Frame
+    $f = '';
+    if ($this->format['epoch']) {
+      if ($this->apparent)
+        $f = $this->epoch->toDate()->format($this->format['epoch']);
+      else
+        $f = $this->frame;
+      $f = "($f)";
+    }
 
     // Format string
     $α = "{$αd}ʰ{$αm}ᵐ{$αs}ˢ.{$αμ}";
     $δ = "{$δd}°{$δm}'{$δs}\".{$δμ}";
-    return "α {$α}, δ {$δ}, {$d} ({$f})";
-  }
-
-  public function format($format) {
-    $this->format = $format;
-
-    if (preg_match('/{RD(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αD     = sprintf($m[1], $this->ra->toAngle()->deg);
-      $format = str_replace($m[0], $αD, $format);
-    }
-
-    if (preg_match('/{Rh(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αh     = sprintf($m[1], $this->ra->h);
-      $format = str_replace($m[0], $αh, $format);
-    }
-
-    if (preg_match('/{Rm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αm     = sprintf(abs($m[1]), $this->ra->m);
-      $format = str_replace($m[0], $αm, $format);
-    }
-
-    if (preg_match('/{Rs(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αs     = sprintf(abs($m[1]), $this->ra->s);
-      $format = str_replace($m[0], $αs, $format);
-    }
-
-    if (preg_match('/{Ru(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $αu     = sprintf(abs($m[1]), $this->ra->micro);
-      $format = str_replace($m[0], str_replace('0.', '', $αu), $format);
-    }
-
-
-    // // //
-
-    if (preg_match('/{DD(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δD     = sprintf($m[1], $this->dec->deg);
-      $format = str_replace($m[0], $δD, $format);
-    }
-
-    if (preg_match('/{Dd(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δd     = sprintf($m[1], $this->dec->d);
-      $format = str_replace($m[0], $δd, $format);
-    }
-    if (preg_match('/{Dm(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δm     = sprintf(abs($m[1]), $this->dec->m);
-      $format = str_replace($m[0], $δm, $format);
-    }
-    if (preg_match('/{Ds(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $δs     = sprintf(abs($m[1]), $this->dec->s);
-      $format = str_replace($m[0], $δs, $format);
-    }
-    if (preg_match('/{Du(%.[0-9]{0,2}\.{0,1}[0-9]{0,3}[a-zA-Z])}/', $format, $m)) {
-      $μ      = abs($this->dec->s - intval($this->dec->s));
-      $δμ     = sprintf($m[1], $μ);
-      $format = str_replace($m[0], str_replace('0.', '', $δμ), $format);
-    }
-    // // //
-
-    if (preg_match('/{D(AU|au|KM|km|PC|pc)*(%.[0-9]{0,1}\.{0,1}[0-9]{0,3}[a-zA-Z])}/',
-                    $format, $m)) {
-      $r = $this->dist->copy()->setUnit('AU');
-      $d = $r->au < Distance::pc(1)->au ? $r : $r->setUnit('pc');
-      $d = $r->au < 1 ? $r->setUnit('km') : $r;
-
-      if ($m[1])
-        $d = sprintf($m[2], $this->dist->{strtolower($m[1])}) . ' ' . $m[1];
-
-      $format = str_replace($m[0], $d, $format);
-    }
-
-    if (preg_match('/{F([a-zA-Z-\s\.]*)}/', $format, $m)) {
-      $F      = $this->frame->name;
-      $Fd     = $this->apparent ? $this->epoch->toDate()->format($m[1]) : $this->frame->equinox;
-      $F      = $this->apparent ? "$Fd" : "$F/$Fd";
-      $format = str_replace($m[0], "$F", $format);
-    }
-
-    return $format;
+    return "α {$α}, δ {$δ}{$d}{$f}";
   }
 
 }

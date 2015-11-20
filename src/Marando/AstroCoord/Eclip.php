@@ -32,7 +32,36 @@ use \Marando\Units\Distance;
  */
 class Eclip {
 
-  use Traits\CopyTrait;
+  use Traits\CopyTrait,
+      Traits\EclipFormat;
+
+  //----------------------------------------------------------------------------
+  // Constants
+  //----------------------------------------------------------------------------
+
+  /**
+   * Default Format:
+   * λ 195°41'03".276, β +07°46'10".325
+   */
+  const FORMAT_DEFAULT = 'λ Ld°Lm\'Ls".Lu, β +Bd°Bm\'Bs".Bu';
+
+  /**
+   * Full Format:
+   * λ 195°41'03".276, β +07°46'10".325, 0.768 AU
+   */
+  const FORMAT_FULL = 'λ Ld°Lm\'Ls".Lu, β +Bd°Bm\'Bs".Bu, Da';
+
+  /**
+   * Degree Format:
+   * λ 195.68424, β +07.76953
+   */
+  const FORMAT_DEGREES = 'λ L°, β +B°';
+
+  /**
+   * Spaced Format:
+   * λ 195 195.68424 03.276, β +07 46 10.325
+   */
+  const FORMAT_SPACED = 'λ Ld Lm Ls.Lu, β +Bd Bm Bs.Bu';
 
   //----------------------------------------------------------------------------
   // Constructors
@@ -48,6 +77,8 @@ class Eclip {
   public function __construct(Angle $lon, Angle $lat, Distance $dist = null) {
     $this->setPosition($lon, $lat);
     $this->setDistance($dist);
+
+    $this->format = static::FORMAT_DEFAULT;
   }
 
   //----------------------------------------------------------------------------
@@ -131,6 +162,8 @@ class Eclip {
    * @return string
    */
   public function __toString() {
+    return $this->format($this->format);
+    
     // Longitude
     $λd = sprintf('%03.0f', $this->lon->d);
     $λm = sprintf('%02d', $this->lon->m);
