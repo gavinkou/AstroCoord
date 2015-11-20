@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +25,6 @@ use \Marando\AstroCoord\Geo;
 use \Marando\AstroCoord\Horiz;
 use \Marando\AstroDate\Epoch;
 use \Marando\IAU\IAU;
-use \Marando\IAU\iauASTROM;
 use \Marando\IERS\IERS;
 use \Marando\Units\Angle;
 use \Marando\Units\Distance;
@@ -37,8 +36,8 @@ use \Marando\Units\Time;
  * Represents an equatorial coordinate
  *
  * @param Frame $frame Reference frame
- * @param Epoch $epoch Observation epoch
- * @param Geo   $topo  Geographic observation location
+ * @param Epoch $epoch Observational epoch
+ * @param Geo   $topo  Observational location
  * @param Time  $ra    Right ascension
  * @param Angle $dec   Declination
  * @param Angle $dist  Observer to target distance
@@ -84,10 +83,10 @@ class Equat {
    * Creates a new equatorial coordinate
    *
    * @param Frame           $frame Reference frame
-   * @param Epoch|AstroDate $epoch Observation epoch
+   * @param Epoch|AstroDate $epoch Observational epoch
    * @param Time            $ra    Right ascension
    * @param Angle           $dec   Declination
-   * @param Distance        $dist  Distance
+   * @param Distance        $dist  Observer to target distance
    */
   public function __construct(Frame $frame, $epoch, Time $ra, Angle $dec,
           Distance $dist = null) {
@@ -97,10 +96,10 @@ class Equat {
     $this->epoch = $epoch;
 
     // Set right ascension, declination and distance
-    $this->ra   = $ra->setUnit('hms');
-    $this->dec  = $dec;
-    $this->dist = $dist;
+    $this->setPosition($ra, $dec);
+    $this->setDistance($dist);
 
+    // Set default format
     $this->format = static::FORMAT_DEFAULT;
   }
 
@@ -115,7 +114,7 @@ class Equat {
   protected $frame;
 
   /**
-   * Observation epoch
+   * Observational epoch
    * @var Epoch
    */
   protected $epoch;
@@ -156,8 +155,6 @@ class Equat {
    */
   protected $orig;
 
-
-
   public function __get($name) {
     switch ($name) {
       case 'frame':
@@ -193,19 +190,19 @@ class Equat {
   /**
    * Sets the right ascension and declination of this instance
    *
-   * @param  Time   $ra
-   * @param  Angle  $dec
+   * @param  Time   $ra  Right ascension
+   * @param  Angle  $dec Declination
    * @return static
    */
   public function setPosition(Time $ra, Angle $dec) {
-    $this->ra  = $ra;
+    $this->ra  = $ra->setUnit('hms');
     $this->dec = $dec;
 
     return $this;
   }
 
   /**
-   * Sets the topographic observation point of this instance
+   * Sets the topographic observational location of this instance
    *
    * @param  Geo    $geo
    * @return static
@@ -233,12 +230,12 @@ class Equat {
    * @return bool
    */
   public function isApparent() {
-    return $this->apparent;
+    return $this->apparent == true ? true : false;
   }
 
   /**
    * Returns the apparent coordinates for this instance. Optional weather
-   * parameters can be supplied to apply atmospheric refraction to the result.
+   * parameters may be supplied to apply atmospheric refraction to the result.
    *
    * @param  Pressure    $pressure Atmospheric pressure
    * @param  Temperature $temp     Atmospheric temperature
@@ -250,7 +247,7 @@ class Equat {
 
     // Check if aleady converted to apparent, and return that if so
     if ($this->apparent)
-      return $this->copy();
+      return $this;
 
     // Save original coordinates
     $this->orig = $this->copy();
@@ -282,8 +279,11 @@ class Equat {
   public function toHoriz(Pressure $pressure = null, Temperature $temp = null,
           $humidity = null) {
 
+    // Use original coordinates if already apparent
+    $orig = $this->isApparent() ? $this->orig->copy() : $this->copy();
+
     // Return topographic observed horizontal coordinates
-    return $this->IRCStoObserved('h', $pressure, $temp, $humidity);
+    return $orig->IRCStoObserved('h', $pressure, $temp, $humidity);
   }
 
   /**
@@ -292,13 +292,13 @@ class Equat {
    * @return Eclip
    */
   public function toEclip(Angle $obli = null) {
-    // Use original coordinates if they're present
-    $radec       = $this;  //$this->orig ? $this->orig->copy() : $this;
-    $radec->topo = null;
+    // Use original coordinates if already apparent
+    $orig       = $this->isApparent() ? $this->orig->copy() : $this->copy();
+    $orig->topo = null;
 
-    $α = $radec->ra->toAngle()->rad;
-    $δ = $radec->dec->rad;
-    $ε = $obli ? $obli->rad : $radec->obli()->rad;
+    $α = $orig->ra->toAngle()->rad;
+    $δ = $orig->dec->rad;
+    $ε = $obli ? $obli->rad : $orig->obli()->rad;
 
     $λ = atan2((sin($α) * cos($ε) + tan($δ) * sin($ε)), cos($α));
     $β = asin(sin($δ) * cos($ε) - cos($δ) * sin($ε) * sin($α));
@@ -452,46 +452,6 @@ class Equat {
    */
   public function __toString() {
     return $this->format($this->format);
-
-
-    // Right Ascension
-    $αd = sprintf('%02d', abs($this->ra->h));
-    $αm = sprintf('%02d', abs($this->ra->m));
-    $αs = sprintf('%02d', abs($this->ra->s));
-    $αμ = str_replace('0.', '', round($this->ra->s - intval($this->ra->s), 3));
-    $αμ = str_pad(abs($αμ), 3, '0', STR_PAD_RIGHT);
-
-    // Declination
-    $δd = sprintf('%+03d', abs($this->dec->d));
-    $δm = sprintf('%02d', abs($this->dec->m));
-    $δs = sprintf('%02d', abs($this->dec->s));
-    $δμ = str_replace('0.', '', round($this->dec->s - intval($this->dec->s), 3));
-    $δμ = str_pad(abs($δμ), 3, '0', STR_PAD_RIGHT);
-
-    // Distance and frame
-    $d = '';
-    if ($this->format['dist']) {
-      $d = $this->dist->setUnit($this->format['dist']);
-      $d = ", $d ";
-    }
-    else {
-      $d = ' ';
-    }
-
-    // Frame
-    $f = '';
-    if ($this->format['epoch']) {
-      if ($this->apparent)
-        $f = $this->epoch->toDate()->format($this->format['epoch']);
-      else
-        $f = $this->frame;
-      $f = "($f)";
-    }
-
-    // Format string
-    $α = "{$αd}ʰ{$αm}ᵐ{$αs}ˢ.{$αμ}";
-    $δ = "{$δd}°{$δm}'{$δs}\".{$δμ}";
-    return "α {$α}, δ {$δ}{$d}{$f}";
   }
 
 }

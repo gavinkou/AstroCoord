@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,8 +26,8 @@ use \Marando\Units\Distance;
 /**
  * Represents ecliptic coordinates
  *
- * @property Angle    $lon  Ecliptic longitude
- * @property Angle    $lat  Ecliptic latitude
+ * @property Angle    $lon  Ecliptic longitude, λ
+ * @property Angle    $lat  Ecliptic latitude, β
  * @property Distance $dist Observer to target distance
  */
 class Eclip {
@@ -75,9 +75,11 @@ class Eclip {
    * @param Distance $dist Observer to target distance
    */
   public function __construct(Angle $lon, Angle $lat, Distance $dist = null) {
+    // Set position and distance
     $this->setPosition($lon, $lat);
     $this->setDistance($dist);
 
+    // Set default string format
     $this->format = static::FORMAT_DEFAULT;
   }
 
@@ -163,25 +165,6 @@ class Eclip {
    */
   public function __toString() {
     return $this->format($this->format);
-    
-    // Longitude
-    $λd = sprintf('%03.0f', $this->lon->d);
-    $λm = sprintf('%02d', $this->lon->m);
-    $λs = sprintf('%02d', $this->lon->s);
-    $λμ = str_replace('0.', '', round($this->lon->s - intval($this->lon->s), 3));
-    $λμ = str_pad($λμ, 3, '0', STR_PAD_RIGHT);
-
-    // Latitude
-    $βd = sprintf('%+03.0f', $this->lat->d);
-    $βm = sprintf('%02d', $this->lat->m);
-    $βs = sprintf('%02d', $this->lat->s);
-    $βμ = str_replace('0.', '', round($this->lat->s - intval($this->lat->s), 3));
-    $βμ = str_pad($βμ, 3, '0', STR_PAD_RIGHT);
-
-    // Format string
-    $λ = "{$λd}°{$λm}'{$λs}\".{$λμ}";
-    $β = "{$βd}°{$βm}'{$βs}\".{$βμ}";
-    return "λ {$λ}, β {$β}, {$this->dist}";
   }
 
 }

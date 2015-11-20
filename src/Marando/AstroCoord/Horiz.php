@@ -1,7 +1,7 @@
 <?php
 
 /*
- * Copyright (C) 2015 ashley
+ * Copyright (C) 2015 Ashley Marando
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,7 +24,7 @@ use \Marando\Units\Angle;
 use \Marando\Units\Distance;
 
 /**
- * Represents horizontal altitude and azimuth coordinates
+ * Represents horizontal (alt/az) coordinates
  *
  * @property Angle $alt  Altitude
  * @property Angle $az   Azimuth
@@ -67,10 +67,19 @@ class Horiz {
   // Constructors
   //----------------------------------------------------------------------------
 
+  /**
+   * Creates a new horizontal coordinate
+   *
+   * @param Angle    $alt  Altitude, 0° = Horizon
+   * @param Angle    $az   Azimuth, 0° = North, 90° = East
+   * @param Distance $dist Observer to target distance
+   */
   public function __construct(Angle $alt, Angle $az, Distance $dist = null) {
+    // Set position and distance
     $this->setPosition($alt, $az);
     $this->setDistance($dist);
 
+    // Set default string format
     $this->format = static::FORMAT_DEFAULT;
   }
 
@@ -124,8 +133,8 @@ class Horiz {
   /**
    * Sets the altitude and azimuth of this instance
    *
-   * @param  Angle  $alt Altitude
-   * @param  Angle  $az  Azimuth
+   * @param  Angle  $alt Altitude, 0° = Horizon
+   * @param  Angle  $az  Azimuth, 0° = North, 90° = East
    * @return static
    */
   public function setPosition(Angle $alt, Angle $az) {
@@ -171,27 +180,6 @@ class Horiz {
    */
   public function __toString() {
     return $this->format($this->format);
-
-
-    // Altitude
-    $hd = sprintf('%03.0f', $this->alt->d);
-    $hm = sprintf('%02d', abs($this->alt->m));
-    $hs = sprintf('%02d', abs($this->alt->s));
-    $hμ = str_replace('0.', '', round($this->alt->s - intval($this->alt->s), 3));
-    $hμ = str_pad(abs($hμ), 3, '0', STR_PAD_RIGHT);
-
-    // Azimuth
-    $Ad = sprintf('%03.0f', $this->az->d);
-    $Am = sprintf('%02d', abs($this->az->m));
-    $As = sprintf('%02d', abs($this->az->s));
-    $Aμ = str_replace('0.', '', round($this->az->s - intval($this->az->s), 3));
-    $Aμ = str_pad(abs($Aμ), 3, '0', STR_PAD_RIGHT);
-
-    // Format string
-    $h = "{$hd}°{$hm}'{$hs}\".{$hμ}";
-    $A = "{$Ad}°{$Am}'{$As}\".{$Aμ}";
-
-    return "h {$h}, A {$A}, {$this->dist}";
   }
 
 }
