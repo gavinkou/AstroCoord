@@ -57,7 +57,7 @@ trait HorizFormat {
 
     if (strstr($format, 'H')) {
       $repl   = strstr($format, '+H') ? '+H' : 'H';
-      $fmt    = strstr($format, '+H') ? '%+03.5f' : '%03.5f';
+      $fmt    = strstr($format, '+H') ? '%+09.5f' : '%09.5f';
       $str    = sprintf($fmt, $this->alt->deg);
       $format = str_replace($repl, $str, $format);
       $format = str_replace("\\$str", 'H', $format);

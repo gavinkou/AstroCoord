@@ -254,15 +254,15 @@ class Equat {
 
     // If no topographic location set, return apparent geocentric
     if ($this->topo == false || $this->topo == null)
-      return $this->IRCStoApparentGeo();
+      return $this->ICRStoApparentGeo();
 
     // If topographic location set, but no weather, return topographic apparent
     if ($this->topo && !($pressure || $temp || $humidity))
-      return $this->IRCStoTopo();
+      return $this->ICRStoTopo();
 
     // If topographic location set, and weather, return topographic observed
     if ($this->topo && ($pressure || $temp || $humidity))
-      return $this->IRCStoObserved();
+      return $this->ICRStoObserved();
 
     throw new Exception('An error has occured finding apparent coordinates');
   }
@@ -283,7 +283,7 @@ class Equat {
     $orig = $this->isApparent() ? $this->orig->copy() : $this->copy();
 
     // Return topographic observed horizontal coordinates
-    return $orig->IRCStoObserved('h', $pressure, $temp, $humidity);
+    return $orig->ICRStoObserved('h', $pressure, $temp, $humidity);
   }
 
   /**
@@ -335,7 +335,7 @@ class Equat {
    * of this instance
    * @return static
    */
-  protected function IRCStoApparentGeo() {
+  protected function ICRStoApparentGeo() {
     // Instance initial properties
     $rc    = $this->ra->toAngle()->rad;
     $dc    = $this->dec->rad;
@@ -343,17 +343,15 @@ class Equat {
     $pr    = 0;
     $pd    = 0;
     $rv    = 0;
-    $px    = $this->dist ? (8.794 / 3600) / $this->dist->au : 0;
+    $px    = $this->dist->au > 0 ? (8.794 / 3600) / $this->dist->au : 0;
 
     // ICRS -> CIRS (geocentric observer)
     IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
 
     // CIRS -> ICRS (astrometric)
-    IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
-
+    //IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
     // ICRS (astrometric) -> CIRS (geocentric observer)
-    IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
-
+    //IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
     // Conversion to apparent place via equation of origins
     $ra = $ri - $eo;
     $da = $di;
@@ -374,9 +372,9 @@ class Equat {
    * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
    * @return static|Horiz
    */
-  protected function IRCStoTopo($type = 'e') {
+  protected function ICRStoTopo($type = 'e') {
     // Topo is Same as observed but with no weather
-    return $this->IRCStoObserved($type);
+    return $this->ICRStoObserved($type);
   }
 
   /**
@@ -385,7 +383,7 @@ class Equat {
    * @param  string       $type Coordintate type, 'e' for equat 'h' for horiz
    * @return static|Horiz
    */
-  protected function IRCStoObserved($type = 'e', Pressure $pressure = null,
+  protected function ICRStoObserved($type = 'e', Pressure $pressure = null,
           Temperature $temp = null, $humidity = null) {
 
     // Instance initial properties
@@ -412,11 +410,9 @@ class Equat {
     IAU::Atci13($rc, $dc, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
 
     // CIRS -> ICRS (astrometric)
-    IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
-
+    //IAU::Atic13($ri, $di, $date1, 0, $rca, $dca, $eo);
     // ICRS (astrometric) -> CIRS (geocentric observer)
-    IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
-
+    //IAU::Atci13($rca, $dca, $pr, $pd, $px, $rv, $date1, 0, $ri, $di, $eo);
     // Apparent place ?
     //$ri = $ri - $eo;
     //$di = $di;

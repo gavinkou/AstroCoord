@@ -28,7 +28,6 @@ class EquatTest extends PHPUnit_Framework_TestCase {
     $c  = new Cartesian(Frame::ICRF(), $dt->toEpoch(), $x, $y, $z);
 
     $apparent = $c->toEquat()->apparent();
-    echo "\n".$apparent->toHoriz();
 
     $prec = Angle::arcsec(3)->deg;
     $this->assertEquals(180.78098, $apparent->ra->toAngle()->deg, 'ra', $prec);
