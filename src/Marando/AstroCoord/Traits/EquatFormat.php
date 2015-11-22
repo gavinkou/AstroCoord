@@ -107,7 +107,7 @@ trait EquatFormat {
 
     if (strstr($format, 'Dd')) {
       $repl   = strstr($format, '+Dd') ? '+Dd' : 'Dd';
-      $fmt    = strstr($format, '+Dd') ? '%+03d' : '%02d';
+      $fmt    = strstr($format, '+Dd') ? '%+03d' : '%04d';
       $str    = sprintf($fmt, $this->dec->d);
       $format = str_replace($repl, $str, $format);
     }

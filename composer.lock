@@ -51,16 +51,16 @@
         },
         {
             "name": "marando/php-iers",
-            "version": "0.1.3",
+            "version": "0.1.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/phpIERS.git",
-                "reference": "eb97612c0c64ede35a1dcde5338fc4575192b5cf"
+                "reference": "196a58873e7b85ac8625d71b7742cea2143293b5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/phpIERS/zipball/eb97612c0c64ede35a1dcde5338fc4575192b5cf",
-                "reference": "eb97612c0c64ede35a1dcde5338fc4575192b5cf",
+                "url": "https://api.github.com/repos/marando/phpIERS/zipball/196a58873e7b85ac8625d71b7742cea2143293b5",
+                "reference": "196a58873e7b85ac8625d71b7742cea2143293b5",
                 "shasum": ""
             },
             "require": {
@@ -86,20 +86,20 @@
                 }
             ],
             "description": "A PHP package that simplifies obtaining Earth rotation values from IERS bulletins.",
-            "time": "2015-11-14 22:57:43"
+            "time": "2015-11-22 20:39:32"
         },
         {
             "name": "marando/php-sofa",
-            "version": "0.2.2",
+            "version": "0.2.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/phpSOFA.git",
-                "reference": "1a13002023a9dcc496e901c2a6a8d15427f1d1a9"
+                "reference": "e849ac6413b806c1696486b8fd4fc6bcd1f28fd4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/marando/phpSOFA/zipball/1a13002023a9dcc496e901c2a6a8d15427f1d1a9",
-                "reference": "1a13002023a9dcc496e901c2a6a8d15427f1d1a9",
+                "url": "https://api.github.com/repos/marando/phpSOFA/zipball/e849ac6413b806c1696486b8fd4fc6bcd1f28fd4",
+                "reference": "e849ac6413b806c1696486b8fd4fc6bcd1f28fd4",
                 "shasum": ""
             },
             "require": {
@@ -125,7 +125,7 @@
                 }
             ],
             "description": "A PHP port of the IAU SOFA Library",
-            "time": "2015-11-15 23:56:29"
+            "time": "2015-11-22 21:16:36"
         },
         {
             "name": "marando/units",
