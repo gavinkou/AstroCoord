@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "9f72293e7c2aa030e83c43e1bac03404",
-    "content-hash": "cab683ac552e9adc1f86a6db13da2000",
+    "hash": "aeb9eadf6ab5be04e066f430e5dc6a12",
+    "content-hash": "3be2763949d0bd5287f0611170899821",
     "packages": [
         {
             "name": "marando/astrodate",
@@ -90,7 +90,7 @@
         },
         {
             "name": "marando/php-sofa",
-            "version": "0.2-alpha.8",
+            "version": "0.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/marando/phpSOFA.git",
